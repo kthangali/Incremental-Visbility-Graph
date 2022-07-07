@@ -1,0 +1,21 @@
+# Build
+build_debug/
+build_release/
+
+# Data
+data/dao-map
+data/dao-scen
+data/*.zip
+datasets/
+
+# Jupyter checkpoints, python cache
+*.ipynb_checkpoints/
+*__pycache__
+
+# Output files
+*.txt
+!CMakeLists.txt
+*.png
+*.npz
+*.csv
+logs/
