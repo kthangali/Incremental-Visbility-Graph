@@ -69,11 +69,11 @@ void scan(Node<StateXY>* node, set<StateXY> scan_x, set<StateXY> scan_y) // Env<
             {
                     if(y_move == 0)
                     {
-                        // scan_x.insert(newState);
+                        scan_x.insert(newState);
                     }
                     else
                     {
-                        // scan_y.insert(newState);
+                        scan_y.insert(newState);
                     }
 
             }
