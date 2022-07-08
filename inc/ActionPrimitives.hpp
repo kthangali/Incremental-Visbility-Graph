@@ -12,6 +12,8 @@ vector<Transition<State>> AP_Template<State>::getSuccessors(State& s) {
 }
 
 
+
+
 //////////////////////////////////////////////////////////////
 ///// Single dimension action primitives class ///////////////
 

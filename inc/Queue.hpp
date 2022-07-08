@@ -44,66 +44,79 @@ void Queue<State>::insert(shared_ptr<NodeT>& n) {
 
 //initialize dX and dY to get through up/down/left/right
 
-void scan(Node<StateXY>* node, set<StateXY> scan_x, set<StateXY> scan_y) // Env<State>* e)
-{
-    int dX[4] = {-1,1, 0, 0}; 
-    int dY[4] = {0, 0, -1, 1};
-    for(int i = 0; i < 4; i++)
-    {
-        int x_move = dX[i];
-        int y_move = dY[i];
-        bool obstacle_hit = false; 
-        Node<StateXY>* curr = node;  
-        while(obstacle_hit == false)
-        {
-            //current x and y positions 
-            int currPose_x = node->s.c[0]; 
-            int currPose_y = node->s.c[1];
-            int new_x = currPose_x + x_move;
-            int new_y = currPose_y + y_move;
-            //create new state XY with new_x and new_y
-            StateXY newState = StateXY(new_x, new_y);
-            //obstacle_hit = e->isValidState(newState);
-            obstacle_hit = false;
-            if(obstacle_hit)
-            {
-                    if(y_move == 0)
-                    {
-                        scan_x.insert(newState);
-                    }
-                    else
-                    {
-                        scan_y.insert(newState);
-                    }
+// void scan(Node<StateXY>* node, set<StateXY> scan_x, set<StateXY> scan_y, Env<StateXY>* e)
+// {
+//     int dX[4] = {-1,1, 0, 0}; 
+//     int dY[4] = {0, 0, -1, 1};
+//     //loop over directions 
+//     for(int i = 0; i < 4; i++)
+//     {
+//         int x_move = dX[i];
+//         int y_move = dY[i];
+//         bool obstacle_hit = false; 
+//         //until we hit an obstacle
+//         while(obstacle_hit == false)
+//         {
+//             //current x and y positions 
+//             int currPose_x = node->s.c[0]; 
+//             int currPose_y = node->s.c[1];
+//             int new_x = currPose_x + x_move;
+//             int new_y = currPose_y + y_move;
+//             //create new state XY with new_x and new_y
+//             StateXY newState = StateXY(new_x, new_y);
+//             //collision check the new state 
+//             obstacle_hit = e->isValidState(newState);
+//             if(obstacle_hit)
+//             {
+//                     //add to appropriate list of partial scans 
+//                     if(y_move == 0)
+//                     {
+//                         scan_x.insert(newState);
+//                     }
+//                     else
+//                     {
+//                         scan_y.insert(newState);
+//                     }
 
-            }
+//             }
 
-        }
-    }
-}
+//         }
+//     }
+// }
 
-//Input: set of scans in x direction and set of scans in y direction 
-//Output: set of stateXY objects present in both, indicating obstacle corner 
-set<StateXY> getVG(set<StateXY> scans_x, set<StateXY> scans_y)
-{
-    set<StateXY> VG {}; 
-    for(auto itr : scans_x)
-    {
-        if(scans_y.count(itr) != 0){
-            VG.insert(itr);
-        }
-    }
-    return VG; 
-}
-
-
-//run A* search over vg to find shortest path and return its length to be used as g value 
-int shortPathFromVG(set<StateXY> vg)
-{
+// //Input: set of scans in x direction and set of scans in y direction 
+// //Output: set of stateXY objects present in both, indicating obstacle corner 
+// set<StateXY> getVG(set<StateXY> scans_x, set<StateXY> scans_y)
+// {
+//     set<StateXY> VG {}; 
+//     for(auto itr : scans_x) 
+//     {
+//         //if the state is in both scans_x and scans_y
+//         if(scans_y.count(itr) != 0){
+//             VG.insert(itr);
+//         }
+//     }
+//     return VG; 
+// }
 
 
-    return 0;
-}
+// //run A* search over vg to find shortest path and return its length to be used as g value 
+// //leave for last
+// int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
+// {
+//     //declare adj list
+//     for(auto node: vg)
+//     {
+//         //add to adj list 
+//         //loop over other vg nodes 
+//         //check valid edge, add to list if valid 
+//         //store edge values as distances between nodes 
+//         //checking validity of edge - Env.getTransition(s1, s2).isValid == true?
+//     }
+//     //do A* over adj list to find shortest path from start to goal 
+
+// }
+
 // Regular A* expand
 //this one needs to be modified (how g value is calculated)
 template <class State>
@@ -123,10 +136,14 @@ tuple<vector<shared_ptr<Node<State>>>, vector<shared_ptr<Node<State>>> > Queue<S
     //can we use this same create children function for HVG implementation 
     vector<Transition<State> > transitions = m_ap->getSuccessors(qn.n->s);
     vector<shared_ptr<NodeT>> children;
+    // vector<shared_ptr<HVGNode>> children;
     for (const Transition<State>& tran : transitions) {
         if (!tran.isValid)
             continue;
-
+        //do scanning logic over child 
+        //get child's hvg graph and shortest path 
+        //set g value to be length of shortest path
+        //then push onto children 
         shared_ptr<NodeT> child = make_shared<NodeT>(qn.n, qn.n->g + tran.cost, -1, tran.s, false, false);
         children.push_back(child);
     }

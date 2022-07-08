@@ -2,7 +2,7 @@
 #include "utils.h"
 #include <algorithm>  // For reverse
 #include <set> 
-// #include "State.h"
+#include "State.h"
 
 /////////////// Node (Old version) /////////////
 // Old version: Note that State s is a fixed type which makes it impossible to generalize
@@ -36,11 +36,14 @@ struct Node {
         parent(parent), g(g), ancF(ancF), s(s), expandedAd(expandedAd), expandedInAd(expandedInAd){};
 };
 
-// class HVGNode : public Node<StateXY>{
-//     std::set<StateXY> scan_x; 
-//     std::set<StateXY> scan_y; 
+class HVGNode : public Node<StateXY>{
+    public: 
+        HVGNode();
+        std::set<StateXY> scan_x; 
+        std::set<StateXY> scan_y; 
+        std::set<StateXY> vg_nodes;
 
-// };
+};
 
 // Helpful util function
 template <class State>
