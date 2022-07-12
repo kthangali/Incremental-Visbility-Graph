@@ -10,7 +10,7 @@ using namespace std;
 
 //initialize dX and dY to get through up/down/left/right
 
-vector<HVGNode> HVGQueue::getChildren(HVGNode* parentNode, StateXY& parentState, Env<StateXY>* env)
+vector<HVGNode> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env)
 {   
     //pass in action primitive and call ap->getActions
     vector<StateXY> actions = m_ap->getActions(parentState);
@@ -21,7 +21,8 @@ vector<HVGNode> HVGQueue::getChildren(HVGNode* parentNode, StateXY& parentState,
         HVGNode child = HVGNode(); //create child node for corresponding action 
         child.scan_x = parentNode->scan_x; //copy over scans 
         child.scan_y = parentNode->scan_y;
-        scan(child, env); //add any obstacles to previous scans 
+        shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
+        scan(child_ptr, env); //update scans
         child.vg_nodes = getVG(child); //generate child's vg graph 
         //search over child here using A* function to get its g value 
         //set child's g value 
@@ -41,21 +42,25 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     for (DuplicityChecker<StateXY>* dc: m_dc_updates) { // Updates Duplicity Checkers
         dc->updateDuplicity(qn);
     }
-    shared_ptr<HVGNode*> qn_HVG = dynamic_pointer_cast<HVGNode*>(qn.n); //cast qn.n to an HVG Node pointer 
+    // shared_ptr<HVGNode*> qn_HVG = dynamic_pointer_cast<HVGNode*>(qn.n); //cast qn.n to an HVG Node pointer 
+    shared_ptr<HVGNode> qn_HVG = dynamic_pointer_cast<HVGNode>(qn.n);
+    scan(qn_HVG, m_ap->m_env);
+
     //call scan on qn_HVG to get its scans 
     vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
     // vector<HVGNode*> expanded = {qn.n};
     // vector<HVGNode*> expanded = {qn.n};
     // HVGNode* parent = qn.n; 
-    vector<shared_ptr<NodeT>> children; 
+    vector<HVGNode> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
     
     return std::make_tuple(children, expanded);
 }
 
-void HVGQueue::scan(HVGNode node, Env<StateXY>* e) //modify this to take in a q node? 
+void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to take in a q node? 
 {
-    set<StateXY> scan_x = node.scan_x;  //set these to be empty sets at first 
-    set <StateXY> scan_y = node.scan_y;
+    HVGNode node_obj = *node;
+    set<StateXY> scan_x = node_obj.scan_x;  //set these to be empty sets at first 
+    set <StateXY> scan_y = node_obj.scan_y;
     int dX[4] = {-1,1, 0, 0}; 
     int dY[4] = {0, 0, -1, 1};
     //loop over directions 
@@ -68,8 +73,8 @@ void HVGQueue::scan(HVGNode node, Env<StateXY>* e) //modify this to take in a q 
         while(obstacle_hit == false)
         {
             //current x and y positions 
-            int currPose_x = node.s.c[0]; 
-            int currPose_y = node.s.c[1];
+            int currPose_x = node_obj.s.c[0]; 
+            int currPose_y = node_obj.s.c[1];
             int new_x = currPose_x + x_move;
             int new_y = currPose_y + y_move;
             //create new state XY with new_x and new_y
@@ -87,16 +92,15 @@ void HVGQueue::scan(HVGNode node, Env<StateXY>* e) //modify this to take in a q 
                     {
                         scan_y.insert(newState);
                     }
-
             }
 
         }
     }
     //re-copy over modified scans 
-    node.scan_x = scan_x;
-    node.scan_y = scan_y;
+    node_obj.scan_x = scan_x;
+    node_obj.scan_y = scan_y;
+    node = make_shared<HVGNode>(node_obj);
 }
-
 
 
 //Input: set of scans in x direction and set of scans in y direction 
