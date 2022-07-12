@@ -8,9 +8,10 @@
 template <class State>
 struct QNode {
     double f;
-    shared_ptr<Node<State>> n;
-
-    QNode(double f, shared_ptr<Node<State>>& n): f(f), n(n){};
+    // shared_ptr<Node<State>> n;
+    shared_ptr<HVGNode<StateXY>> n;
+    // HVGNode* n;
+    QNode(double f, shared_ptr<HVGNode<StateXY>>& n): f(f), n(n){};
     string getStr() const {return n->s.getStr();};
 };
 

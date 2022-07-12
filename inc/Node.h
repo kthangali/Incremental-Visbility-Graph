@@ -36,11 +36,13 @@ struct Node {
         parent(parent), g(g), ancF(ancF), s(s), expandedAd(expandedAd), expandedInAd(expandedInAd){};
 };
 
+template <class State>
 class HVGNode : public Node<StateXY>{
     public: 
         HVGNode();
         std::set<StateXY> scan_x; 
         std::set<StateXY> scan_y; 
+        using Node<StateXY>::g;
         std::set<StateXY> vg_nodes;
 
 };

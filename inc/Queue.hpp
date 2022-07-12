@@ -27,6 +27,7 @@ Queue<State>::~Queue() {
 
 // Regular A* insert
 template <class State>
+//original header: void Queue<State>::insert(shared_ptr<NodeT>& n)
 void Queue<State>::insert(shared_ptr<NodeT>& n) {
     double h = m_hf->getHeuristic(n->s);
     double f = m_pf->getPriority(n->g, h);
@@ -123,17 +124,18 @@ template <class State>
 tuple<vector<shared_ptr<Node<State>>>, vector<shared_ptr<Node<State>>> > Queue<State>::expand(double ancFThresh) {
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
-    QNodeT qn = m_pq.top(); // Get top node
+    QNodeT qn = m_pq.top(); // Get top node 
     m_pq.pop(); // Remove from queue
     if (m_logger != nullptr) // Save to logger if needed
         m_logger->logExpansion(qn.getStr(), m_name);
     for (DuplicityChecker<State>* dc: m_dc_updates) { // Updates Duplicity Checkers
         dc->updateDuplicity(qn);
     }
-    vector<shared_ptr<NodeT>> expanded = {qn.n};
+    vector<shared_ptr<NodeT>> expanded = {qn.n}; 
 
     // Get transition data and create children
     //can we use this same create children function for HVG implementation 
+    //m->ap is an action primitive 
     vector<Transition<State> > transitions = m_ap->getSuccessors(qn.n->s);
     vector<shared_ptr<NodeT>> children;
     // vector<shared_ptr<HVGNode>> children;

@@ -8,16 +8,18 @@
 
 class HVGQueue : public Queue<StateXY> {
 public:
+
+
     HVGQueue();
     //new functions
-    void scan(HVGNode* node, Env<StateXY>* e);
-    set<StateXY> getVG(HVGNode node);
+    void scan(HVGNode<StateXY> node, Env<StateXY>* e);
+    set<StateXY> getVG(HVGNode<StateXY>  node);
     int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
-    template<class StateXY> //not sure about how to format this? needed it to compile 
-    vector<HVGNode> getChildren(HVGNode* parentNode, StateXY& parentState, Env<StateXY>* env);
+    vector<HVGNode<StateXY>> getChildren(HVGNode<StateXY>* parentNode, StateXY& parentState, Env<StateXY>* env);
 
 
     //inherited and modified 
     template<class StateXY> 
     tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > expand(double ancFThresh);
+    using Queue<StateXY>::m_ap;
 };

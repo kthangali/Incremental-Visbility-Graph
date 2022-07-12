@@ -100,6 +100,8 @@ void RunSearchInstance(int argc, char** argv) {
     HF_Manhattan<State, StateXY>* hf1 = new HF_Manhattan<State, StateXY>(workspaceGoal, env);
     PF_Weighted* pf1 = new PF_Weighted(1);
 
+    //change this to an hvg queue for testing
+    //
     Queue<State>* ancQ = new Queue<State>(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
         /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
     // Note that cannot use {dc_all} array initialization for make_shared<>()
@@ -124,6 +126,7 @@ void RunSearchInstance(int argc, char** argv) {
 int main(int argc, char** argv) {
     // testBatchNN();
     RunSearchInstance<StateXY, AP_SingleDim<StateXY> >(argc, argv);
+    //comment bottom 2 out for testing 
     RunSearchInstance<StateXYTime, AP_StateXYTime >(argc, argv);
     RunSearchInstance<StateXYTheta, AP_StateXYTheta >(argc, argv);
 }

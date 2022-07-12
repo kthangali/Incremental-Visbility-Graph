@@ -10,23 +10,22 @@
 
 //initialize dX and dY to get through up/down/left/right
 
-template <class StateXY> 
-vector<HVGNode> HVGQueue::getChildren(HVGNode* parentNode, StateXY& parentState, Env<StateXY>* env)
-{
-    vector<StateXY> actions = getActions(parentState);
-    vector<HVGNode> children; 
+vector<HVGNode<StateXY>> HVGQueue::getChildren(HVGNode<StateXY>* parentNode, StateXY& parentState, Env<StateXY>* env)
+{   
+    //pass in action primitive and call ap->getActions
+    vector<StateXY> actions = m_ap->getActions(parentState);
+    vector<HVGNode<StateXY>> children; 
     for (const StateXY& ac : actions) { 
-        HVGNode child = HVGNode();
-        child.scan_x = parentNode->scan_x;
-        child.scan_y = parentNode->scan_y;
-        scan(child, env);
-        child.vg_nodes = getVG(child);
-        //search over child here using A* function to get its g value
         Transition<StateXY> t = env->getTransition(ac, parentState);
-        if(t.isValid)
-        {
-            children.push_back(child);
-        }
+        if(!t.isValid) {continue;} //skip if transition is invalid 
+        HVGNode<StateXY> child = HVGNode<StateXY>(); //create child node for corresponding action 
+        child.scan_x = parentNode->scan_x; //copy over scans 
+        child.scan_y = parentNode->scan_y;
+        scan(child, env); //add any obstacles to previous scans 
+        child.vg_nodes = getVG(child); //generate child's vg graph 
+        //search over child here using A* function to get its g value 
+        //set child's g value 
+        children.push_back(child);
     }
     return children;
 }
@@ -35,39 +34,26 @@ template <class StateXY>
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
-    HVGNode qn = m_pq.top(); // Get top node
-    m_pq.pop(); // Remove from queue
+    QNodeT qn = m_pq.top(); // Get top node  
+    m_pq.pop(); // Remove from queue 
     if (m_logger != nullptr) // Save to logger if needed
         m_logger->logExpansion(qn.getStr(), m_name);
     for (DuplicityChecker<StateXY>* dc: m_dc_updates) { // Updates Duplicity Checkers
         dc->updateDuplicity(qn);
     }
-    vector<shared_ptr<NodeT>> expanded = {qn.n};
-
-    // Get transition data and create children
-    //can we use this same create children function for HVG implementation 
-    // vector<Transition<StateXY> > transitions = m_ap->getSuccessors(qn.n->s);
-    // vector<shared_ptr<NodeT>> children;
-    // // vector<shared_ptr<HVGNode>> children;
-    // for (const Transition<StateXY>& tran : transitions) {
-    //     if (!tran.isValid)
-    //         continue;
-    //     //do scanning logic over child 
-    //     //get child's hvg graph and shortest path 
-    //     //set g value to be length of shortest path
-    //     //then push onto children 
-    //     shared_ptr<NodeT> child = make_shared<NodeT>(qn.n, qn.n->g + tran.cost, -1, tran.s, false, false);
-    //     children.push_back(child);
-    // }
-    vector<HVGNode> children = getChildren
-    
+    vector<shared_ptr<HVGNode<StateXY>>> expanded = {qn.n}; //set of expanded nodes
+    //qn.n is an hvg node 
+    vector<HVGNode<StateXY>> children; 
+    //children = getChildren(qn.n,qn.n.s, m_ap->env) //how to get environment to be passed in 
+    // vector<HVGNode*> expanded = {qn.n};
+    // HVGNode* parent = qn.n; 
     return std::make_tuple(children, expanded);
 }
 
-void HVGQueue::scan(HVGNode* node, Env<StateXY>* e)
+void HVGQueue::scan(HVGNode<StateXY> node, Env<StateXY>* e) //modify this to take in a q node? 
 {
-    set<StateXY> scan_x = node->scan_x; 
-    set <StateXY> scan_y = node->scan_y;
+    set<StateXY> scan_x = node.scan_x;  //set these to be empty sets at first 
+    set <StateXY> scan_y = node.scan_y;
     int dX[4] = {-1,1, 0, 0}; 
     int dY[4] = {0, 0, -1, 1};
     //loop over directions 
@@ -80,8 +66,8 @@ void HVGQueue::scan(HVGNode* node, Env<StateXY>* e)
         while(obstacle_hit == false)
         {
             //current x and y positions 
-            int currPose_x = node->s.c[0]; 
-            int currPose_y = node->s.c[1];
+            int currPose_x = node.s.c[0]; 
+            int currPose_y = node.s.c[1];
             int new_x = currPose_x + x_move;
             int new_y = currPose_y + y_move;
             //create new state XY with new_x and new_y
@@ -105,15 +91,15 @@ void HVGQueue::scan(HVGNode* node, Env<StateXY>* e)
         }
     }
     //re-copy over modified scans 
-    node->scan_x = scan_x;
-    node->scan_y = scan_y;
+    node.scan_x = scan_x;
+    node.scan_y = scan_y;
 }
 
 
 
 //Input: set of scans in x direction and set of scans in y direction 
 //Output: set of stateXY objects present in both, indicating obstacle corner 
-set<StateXY> HVGQueue::getVG(HVGNode node)
+set<StateXY> HVGQueue::getVG(HVGNode<StateXY> node)
 {
     set<StateXY> scans_x = node.scan_x;
     set<StateXY> scans_y = node.scan_y;
