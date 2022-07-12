@@ -1,5 +1,5 @@
 #include "Hvg.h"
-
+using namespace std;
 //new method of calculating g-value 
 //perform scanning logic over node to generate visibility graph and then perform 
 //A* search from start to node to find shortest euclidean distance, this distance becomes the g-value of the node 
@@ -41,22 +41,13 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     for (DuplicityChecker<StateXY>* dc: m_dc_updates) { // Updates Duplicity Checkers
         dc->updateDuplicity(qn);
     }
+    shared_ptr<HVGNode*> qn_HVG = dynamic_pointer_cast<HVGNode*>(qn.n); //cast qn.n to an HVG Node pointer 
+    //call scan on qn_HVG to get its scans 
     vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
     // vector<HVGNode*> expanded = {qn.n};
+    // vector<HVGNode*> expanded = {qn.n};
     // HVGNode* parent = qn.n; 
-    vector<shared_ptr<NodeT>> children; //call get children and pass in node being expanded 
-    // // vector<shared_ptr<HVGNode>> children;
-    // for (const Transition<StateXY>& tran : transitions) {
-    //     if (!tran.isValid)
-    //         continue;
-    //     //do scanning logic over child 
-    //     //get child's hvg graph and shortest path 
-    //     //set g value to be length of shortest path
-    //     //then push onto children 
-    //     shared_ptr<NodeT> child = make_shared<NodeT>(qn.n, qn.n->g + tran.cost, -1, tran.s, false, false);
-    //     children.push_back(child);
-    // }
-    // vector<HVGNode> children = getChildren
+    vector<shared_ptr<NodeT>> children; 
     
     return std::make_tuple(children, expanded);
 }
