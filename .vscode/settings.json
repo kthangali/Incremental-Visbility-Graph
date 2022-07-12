@@ -72,7 +72,8 @@
         "__split_buffer": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "__node_handle": "cpp"
+        "__node_handle": "cpp",
+        "__tuple": "cpp"
     },
     "cmake.configureOnOpen": true
 }

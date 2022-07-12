@@ -127,6 +127,6 @@ int main(int argc, char** argv) {
     // testBatchNN();
     RunSearchInstance<StateXY, AP_SingleDim<StateXY> >(argc, argv);
     //comment bottom 2 out for testing 
-    RunSearchInstance<StateXYTime, AP_StateXYTime >(argc, argv);
-    RunSearchInstance<StateXYTheta, AP_StateXYTheta >(argc, argv);
+    // RunSearchInstance<StateXYTime, AP_StateXYTime >(argc, argv);
+    // RunSearchInstance<StateXYTheta, AP_StateXYTheta >(argc, argv);
 }

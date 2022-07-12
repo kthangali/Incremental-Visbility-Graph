@@ -36,7 +36,7 @@ struct Node {
         parent(parent), g(g), ancF(ancF), s(s), expandedAd(expandedAd), expandedInAd(expandedInAd){};
 };
 
-template <class State>
+// template <class State>
 class HVGNode : public Node<StateXY>{
     public: 
         HVGNode();

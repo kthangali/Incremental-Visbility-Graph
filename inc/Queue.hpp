@@ -27,96 +27,13 @@ Queue<State>::~Queue() {
 
 // Regular A* insert
 template <class State>
-//original header: void Queue<State>::insert(shared_ptr<NodeT>& n)
-void Queue<State>::insert(shared_ptr<NodeT>& n) {
+void Queue<State>::insert(shared_ptr<Node<State>>& n) {
     double h = m_hf->getHeuristic(n->s);
     double f = m_pf->getPriority(n->g, h);
     QNodeT qn(f, n);
     m_pq.push(qn);
 }
 
-//new method of calculating g-value 
-//perform scanning logic over node to generate visibility graph and then perform 
-//A* search from start to node to find shortest euclidean distance, this distance becomes the g-value of the node 
-
-//write scanning/getVG/shortPathFromVG functions here 
-//update expand function to set g-value to be distance of path returned by shortPathFromVG 
-
-
-//initialize dX and dY to get through up/down/left/right
-
-// void scan(Node<StateXY>* node, set<StateXY> scan_x, set<StateXY> scan_y, Env<StateXY>* e)
-// {
-//     int dX[4] = {-1,1, 0, 0}; 
-//     int dY[4] = {0, 0, -1, 1};
-//     //loop over directions 
-//     for(int i = 0; i < 4; i++)
-//     {
-//         int x_move = dX[i];
-//         int y_move = dY[i];
-//         bool obstacle_hit = false; 
-//         //until we hit an obstacle
-//         while(obstacle_hit == false)
-//         {
-//             //current x and y positions 
-//             int currPose_x = node->s.c[0]; 
-//             int currPose_y = node->s.c[1];
-//             int new_x = currPose_x + x_move;
-//             int new_y = currPose_y + y_move;
-//             //create new state XY with new_x and new_y
-//             StateXY newState = StateXY(new_x, new_y);
-//             //collision check the new state 
-//             obstacle_hit = e->isValidState(newState);
-//             if(obstacle_hit)
-//             {
-//                     //add to appropriate list of partial scans 
-//                     if(y_move == 0)
-//                     {
-//                         scan_x.insert(newState);
-//                     }
-//                     else
-//                     {
-//                         scan_y.insert(newState);
-//                     }
-
-//             }
-
-//         }
-//     }
-// }
-
-// //Input: set of scans in x direction and set of scans in y direction 
-// //Output: set of stateXY objects present in both, indicating obstacle corner 
-// set<StateXY> getVG(set<StateXY> scans_x, set<StateXY> scans_y)
-// {
-//     set<StateXY> VG {}; 
-//     for(auto itr : scans_x) 
-//     {
-//         //if the state is in both scans_x and scans_y
-//         if(scans_y.count(itr) != 0){
-//             VG.insert(itr);
-//         }
-//     }
-//     return VG; 
-// }
-
-
-// //run A* search over vg to find shortest path and return its length to be used as g value 
-// //leave for last
-// int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
-// {
-//     //declare adj list
-//     for(auto node: vg)
-//     {
-//         //add to adj list 
-//         //loop over other vg nodes 
-//         //check valid edge, add to list if valid 
-//         //store edge values as distances between nodes 
-//         //checking validity of edge - Env.getTransition(s1, s2).isValid == true?
-//     }
-//     //do A* over adj list to find shortest path from start to goal 
-
-// }
 
 // Regular A* expand
 //this one needs to be modified (how g value is calculated)

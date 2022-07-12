@@ -12,10 +12,10 @@ public:
 
     HVGQueue();
     //new functions
-    void scan(HVGNode<StateXY> node, Env<StateXY>* e);
-    set<StateXY> getVG(HVGNode<StateXY>  node);
+    void scan(HVGNode node, Env<StateXY>* e);
+    set<StateXY> getVG(HVGNode node);
     int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
-    vector<HVGNode<StateXY>> getChildren(HVGNode<StateXY>* parentNode, StateXY& parentState, Env<StateXY>* env);
+    vector<HVGNode> getChildren(HVGNode* parentNode, StateXY& parentState, Env<StateXY>* env);
 
 
     //inherited and modified 

@@ -34,7 +34,8 @@ public:
 
     ~Queue();
 
-    virtual void insert(shared_ptr<NodeT>& n);
+    virtual void insert(shared_ptr<Node<State>>& n);
+    // virtual void insert(shared_ptr<HVGNode<StateXY>> n);
     virtual tuple<vector<shared_ptr<NodeT>>, vector<shared_ptr<NodeT>> > expand(double ancFThresh); // Returns children, expanded
     virtual bool canExpand(double ancFThresh);
     virtual shared_ptr<NodeT> getTop();

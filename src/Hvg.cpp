@@ -10,15 +10,15 @@
 
 //initialize dX and dY to get through up/down/left/right
 
-vector<HVGNode<StateXY>> HVGQueue::getChildren(HVGNode<StateXY>* parentNode, StateXY& parentState, Env<StateXY>* env)
+vector<HVGNode> HVGQueue::getChildren(HVGNode* parentNode, StateXY& parentState, Env<StateXY>* env)
 {   
     //pass in action primitive and call ap->getActions
     vector<StateXY> actions = m_ap->getActions(parentState);
-    vector<HVGNode<StateXY>> children; 
+    vector<HVGNode> children; 
     for (const StateXY& ac : actions) { 
         Transition<StateXY> t = env->getTransition(ac, parentState);
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        HVGNode<StateXY> child = HVGNode<StateXY>(); //create child node for corresponding action 
+        HVGNode child = HVGNode(); //create child node for corresponding action 
         child.scan_x = parentNode->scan_x; //copy over scans 
         child.scan_y = parentNode->scan_y;
         scan(child, env); //add any obstacles to previous scans 
@@ -41,16 +41,27 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     for (DuplicityChecker<StateXY>* dc: m_dc_updates) { // Updates Duplicity Checkers
         dc->updateDuplicity(qn);
     }
-    vector<shared_ptr<HVGNode<StateXY>>> expanded = {qn.n}; //set of expanded nodes
-    //qn.n is an hvg node 
-    vector<HVGNode<StateXY>> children; 
-    //children = getChildren(qn.n,qn.n.s, m_ap->env) //how to get environment to be passed in 
+    vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
     // vector<HVGNode*> expanded = {qn.n};
     // HVGNode* parent = qn.n; 
+    vector<shared_ptr<NodeT>> children; //call get children and pass in node being expanded 
+    // // vector<shared_ptr<HVGNode>> children;
+    // for (const Transition<StateXY>& tran : transitions) {
+    //     if (!tran.isValid)
+    //         continue;
+    //     //do scanning logic over child 
+    //     //get child's hvg graph and shortest path 
+    //     //set g value to be length of shortest path
+    //     //then push onto children 
+    //     shared_ptr<NodeT> child = make_shared<NodeT>(qn.n, qn.n->g + tran.cost, -1, tran.s, false, false);
+    //     children.push_back(child);
+    // }
+    // vector<HVGNode> children = getChildren
+    
     return std::make_tuple(children, expanded);
 }
 
-void HVGQueue::scan(HVGNode<StateXY> node, Env<StateXY>* e) //modify this to take in a q node? 
+void HVGQueue::scan(HVGNode node, Env<StateXY>* e) //modify this to take in a q node? 
 {
     set<StateXY> scan_x = node.scan_x;  //set these to be empty sets at first 
     set <StateXY> scan_y = node.scan_y;
@@ -99,7 +110,7 @@ void HVGQueue::scan(HVGNode<StateXY> node, Env<StateXY>* e) //modify this to tak
 
 //Input: set of scans in x direction and set of scans in y direction 
 //Output: set of stateXY objects present in both, indicating obstacle corner 
-set<StateXY> HVGQueue::getVG(HVGNode<StateXY> node)
+set<StateXY> HVGQueue::getVG(HVGNode node)
 {
     set<StateXY> scans_x = node.scan_x;
     set<StateXY> scans_y = node.scan_y;
