@@ -3,6 +3,7 @@
 #include <algorithm>  // For reverse
 #include <set> 
 #include "State.h"
+using namespace std;
 
 /////////////// Node (Old version) /////////////
 // Old version: Note that State s is a fixed type which makes it impossible to generalize
@@ -30,20 +31,28 @@ struct Node {
     double ancF;
     bool expandedAd;
     bool expandedInAd;
-
-    
+    Node();
+    // Node(): {};
     Node(const shared_ptr<Node<State>>& parent, double g, double ancF, State s, bool expandedAd, bool expandedInAd):
         parent(parent), g(g), ancF(ancF), s(s), expandedAd(expandedAd), expandedInAd(expandedInAd){};
 };
 
 // template <class State>
-class HVGNode : public Node<StateXY>{
-    public: 
-        HVGNode();
-        std::set<StateXY> scan_x; 
-        std::set<StateXY> scan_y; 
-        using Node<StateXY>::g;
-        std::set<StateXY> vg_nodes;
+struct HVGNode : public Node<StateXY>{
+    // public: 
+        set<StateXY> scan_x; 
+        set<StateXY> scan_y; 
+        double g;
+        set<StateXY> vg_nodes;
+        shared_ptr<Node<StateXY>> parent; // Used to prevent memory leaks
+        StateXY s;
+        
+        double ancF;
+        bool expandedAd;
+        bool expandedInAd;
+        HVGNode(set<StateXY> scan_x, set<StateXY> scan_y, double g, set<StateXY> vg_nodes):
+        scan_x(scan_x), scan_y(scan_y), g(g), vg_nodes(vg_nodes){};
+
 
 };
 

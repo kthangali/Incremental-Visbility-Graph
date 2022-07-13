@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "State.h"
 #include "Search.h"
+#include "Hvg.h"
 
 // Create log directory and return the path
 string createLogDir(string& results_path, string time_str, string suffix) {
@@ -102,8 +103,11 @@ void RunSearchInstance(int argc, char** argv) {
 
     //change this to an hvg queue for testing
     //
-    Queue<State>* ancQ = new Queue<State>(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
+    HVGQueue* ancQ = new HVGQueue(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
         /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
+
+    // Queue<State>* ancQ = new Queue<State>(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
+    //     /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
     // Note that cannot use {dc_all} array initialization for make_shared<>()
 
     BasicAStarSearch<State> astar;

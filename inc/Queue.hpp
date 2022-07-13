@@ -9,6 +9,8 @@
 ///////////////////////// Queue Below ////////////////////////////
 
 using namespace std; 
+
+
 template <class State>
 Queue<State>::Queue(const string& qName, SimpleLogger* logger, 
             HF_Template<State>* hf, 

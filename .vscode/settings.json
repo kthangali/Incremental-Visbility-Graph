@@ -73,7 +73,8 @@
         "queue": "cpp",
         "stack": "cpp",
         "__node_handle": "cpp",
-        "__tuple": "cpp"
+        "__tuple": "cpp",
+        "filesystem": "cpp"
     },
     "cmake.configureOnOpen": true
 }

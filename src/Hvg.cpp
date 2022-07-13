@@ -1,5 +1,18 @@
 #include "Hvg.h"
 using namespace std;
+
+
+//constructor 
+
+HVGQueue::HVGQueue(const string& qName, SimpleLogger* logger, 
+            HF_Template<StateXY>* hf, 
+            PriorityFunction* pf,
+            DuplicityChecker<StateXY>* dc_check, 
+            vector<DuplicityChecker<StateXY>*> dc_updates,
+            AP_Template<StateXY>* ap):
+        Queue(qName, logger, hf, pf, dc_check,
+        dc_updates, ap){
+}
 //new method of calculating g-value 
 //perform scanning logic over node to generate visibility graph and then perform 
 //A* search from start to node to find shortest euclidean distance, this distance becomes the g-value of the node 
@@ -10,21 +23,24 @@ using namespace std;
 
 //initialize dX and dY to get through up/down/left/right
 
+//takes in parentNode/state and environment 
+//returns all the valid child nodes of parentNode with respective scans
 vector<HVGNode> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env)
 {   
     //pass in action primitive and call ap->getActions
-    vector<StateXY> actions = m_ap->getActions(parentState);
+    vector<StateXY> actions = m_ap->getActions(parentState); //generate action space 
     vector<HVGNode> children; 
     for (const StateXY& ac : actions) { 
         Transition<StateXY> t = env->getTransition(ac, parentState);
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        HVGNode child = HVGNode(); //create child node for corresponding action 
+        HVGNode child = HVGNode(parentNode->scan_x, parentNode->scan_y, 0, set<StateXY>()); //create child node for corresponding action 
         child.scan_x = parentNode->scan_x; //copy over scans 
         child.scan_y = parentNode->scan_y;
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
         scan(child_ptr, env); //update scans
         child.vg_nodes = getVG(child); //generate child's vg graph 
-        //search over child here using A* function to get its g value 
+        int g = shortPathFromVG(child.vg_nodes, child.s, child.s); //figure out how to access start
+        child.g = g;
         //set child's g value 
         children.push_back(child);
     }
@@ -125,15 +141,6 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
 //leave for last
 int HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
 {
-    //declare adj list
-    for(auto node: vg)
-    {
-        //add to adj list 
-        //loop over other vg nodes 
-        //check valid edge, add to list if valid 
-        //store edge values as distances between nodes 
-        //checking validity of edge - Env.getTransition(s1, s2).isValid == true?
-    }
-    //do A* over adj list to find shortest path from start to goal 
+    return 5;
 
 }
