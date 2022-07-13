@@ -31,7 +31,7 @@ struct Node {
     double ancF;
     bool expandedAd;
     bool expandedInAd;
-    Node();
+    Node() {}
     // Node(): {};
     Node(const shared_ptr<Node<State>>& parent, double g, double ancF, State s, bool expandedAd, bool expandedInAd):
         parent(parent), g(g), ancF(ancF), s(s), expandedAd(expandedAd), expandedInAd(expandedInAd){};
@@ -52,7 +52,6 @@ struct HVGNode : public Node<StateXY>{
         bool expandedInAd;
         HVGNode(set<StateXY> scan_x, set<StateXY> scan_y, double g, set<StateXY> vg_nodes):
         scan_x(scan_x), scan_y(scan_y), g(g), vg_nodes(vg_nodes){};
-
 
 };
 

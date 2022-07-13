@@ -11,8 +11,7 @@ HVGQueue::HVGQueue(const string& qName, SimpleLogger* logger,
             vector<DuplicityChecker<StateXY>*> dc_updates,
             AP_Template<StateXY>* ap):
         Queue(qName, logger, hf, pf, dc_check,
-        dc_updates, ap){
-}
+        dc_updates, ap){};
 //new method of calculating g-value 
 //perform scanning logic over node to generate visibility graph and then perform 
 //A* search from start to node to find shortest euclidean distance, this distance becomes the g-value of the node 

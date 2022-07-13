@@ -28,7 +28,7 @@ public:
     int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
     vector<HVGNode> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
     
-    //inherited and modified 
+    //inherited
     template<class StateXY> 
     tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > expand(double ancFThresh);
     // using Queue<StateXY>::m_ap;
