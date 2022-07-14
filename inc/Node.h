@@ -31,7 +31,8 @@ struct Node {
     double ancF;
     bool expandedAd;
     bool expandedInAd;
-    Node() {}
+    Node() {};
+    virtual ~Node(){}; //change to a polymorphic type 
     // Node(): {};
     Node(const shared_ptr<Node<State>>& parent, double g, double ancF, State s, bool expandedAd, bool expandedInAd):
         parent(parent), g(g), ancF(ancF), s(s), expandedAd(expandedAd), expandedInAd(expandedInAd){};

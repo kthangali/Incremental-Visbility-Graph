@@ -115,6 +115,7 @@ void RunSearchInstance(int argc, char** argv) {
     // astar.setGoal(goal);
     astar.setWorkspaceGoal(workspaceGoal, env);
     astar.m_qs.push_back(ancQ);
+    // cout << "pushed queue";
     astar.m_stimer = stimer;
 
     string status;

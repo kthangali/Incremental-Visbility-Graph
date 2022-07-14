@@ -25,14 +25,14 @@ public:
     void scan(shared_ptr<HVGNode> node, Env<StateXY>* e);
     set<StateXY> getVG(HVGNode node);
     int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
-    vector<HVGNode> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
+    vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
     
     //inherited
-    template<class StateXY> 
+    // template<class StateXY> 
+    // using Queue<StateXY>::expand; 
     tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > expand(double ancFThresh);
 
     using Queue<StateXY>::Queue;
-    // using Queue<StateXY>::m_dc_updates;
     using Queue<StateXY>::assertCorrectSettings;
     using Queue<StateXY>::m_name;
     using Queue<StateXY>::m_logger;

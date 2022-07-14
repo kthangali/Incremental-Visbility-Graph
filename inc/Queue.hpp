@@ -39,10 +39,9 @@ void Queue<State>::insert(shared_ptr<Node<State>>& n) {
 
 
 // Regular A* expand
-//this one needs to be modified (how g value is calculated)
 template <class State>
 tuple<vector<shared_ptr<Node<State>>>, vector<shared_ptr<Node<State>>> > Queue<State>::expand(double ancFThresh) {
-    assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
+assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
     QNodeT qn = m_pq.top(); // Get top node 
     m_pq.pop(); // Remove from queue

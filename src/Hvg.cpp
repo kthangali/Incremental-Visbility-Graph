@@ -1,10 +1,8 @@
 #include "Hvg.h"
-using namespace std;
+// using namespace std;
 
 
-//constructor 
-
-
+//constructor (same as Queue's constructor)
 HVGQueue::HVGQueue(const string& qName, SimpleLogger* logger, 
             HF_Template<StateXY>* hf, 
             PriorityFunction* pf,
@@ -25,11 +23,11 @@ HVGQueue::HVGQueue(const string& qName, SimpleLogger* logger,
 
 //takes in parentNode/state and environment 
 //returns all the valid child nodes of parentNode with respective scans
-vector<HVGNode> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env)
+vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env)
 {   
     //pass in action primitive and call ap->getActions
     vector<StateXY> actions = m_ap->getActions(parentState); //generate action space 
-    vector<HVGNode> children; 
+    vector<shared_ptr<HVGNode>> children; 
     for (const StateXY& ac : actions) { 
         Transition<StateXY> t = env->getTransition(ac, parentState);
         if(!t.isValid) {continue;} //skip if transition is invalid 
@@ -43,12 +41,14 @@ vector<HVGNode> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& p
         
         child.g = g;
         //set child's g value 
-        children.push_back(child);
+        children.push_back(child_ptr);
     }
     return children;
 }
 
-template <class StateXY>
+//overridden expand function 
+//not getting called, likely because it doesn't have the exact same header as queue? 
+// template <class StateXY>
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
@@ -60,6 +60,7 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
         dc->updateDuplicity(qn);
     }
     // shared_ptr<HVGNode*> qn_HVG = dynamic_pointer_cast<HVGNode*>(qn.n); //cast qn.n to an HVG Node pointer 
+    //casting from NodeT to HVGNode
     shared_ptr<HVGNode> qn_HVG = dynamic_pointer_cast<HVGNode>(qn.n);
     scan(qn_HVG, m_ap->m_env);
 
@@ -68,16 +69,22 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     // vector<HVGNode*> expanded = {qn.n};
     // vector<HVGNode*> expanded = {qn.n};
     // HVGNode* parent = qn.n; 
-    vector<HVGNode> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
+    vector<shared_ptr<HVGNode>> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
+    vector<shared_ptr<Node<StateXY>>> dummy_children;
+    for(auto c: children)
+    {
+        dummy_children.push_back(c);
+    }
     
-    return std::make_tuple(children, expanded);
+    return std::make_tuple(dummy_children, expanded);
 }
 
+//scans in x and y directions of node and adds any hit obstacle coordinates to node's scan lists 
 void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to take in a q node? 
 {
-    HVGNode node_obj = *node;
-    set<StateXY> scan_x = node_obj.scan_x;  //set these to be empty sets at first 
-    set <StateXY> scan_y = node_obj.scan_y;
+    // HVGNode node_obj = node;
+    set<StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
+    set <StateXY> scan_y = node->scan_y;
     int dX[4] = {-1,1, 0, 0}; 
     int dY[4] = {0, 0, -1, 1};
     //loop over directions 
@@ -90,8 +97,8 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to 
         while(obstacle_hit == false)
         {
             //current x and y positions 
-            int currPose_x = node_obj.s.c[0]; 
-            int currPose_y = node_obj.s.c[1];
+            int currPose_x = node->s.c[0]; 
+            int currPose_y = node->s.c[1];
             int new_x = currPose_x + x_move;
             int new_y = currPose_y + y_move;
             //create new state XY with new_x and new_y
@@ -114,9 +121,9 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to 
         }
     }
     //re-copy over modified scans 
-    node_obj.scan_x = scan_x;
-    node_obj.scan_y = scan_y;
-    node = make_shared<HVGNode>(node_obj);
+    node->scan_x = scan_x;
+    node->scan_y = scan_y;
+    // node = make_shared<HVGNode>(node_obj);
 }
 
 
