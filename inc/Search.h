@@ -20,6 +20,7 @@ public:
     virtual void assertStartCorrectly(); // Make sure all settings and variables are good since we are not having constructors
     // virtual void reportStats(const string& fileName) = 0; // Report/save stats
 
+    // vector<Queue<State>*> m_qs;
     vector<Queue<State>*> m_qs;
 
     double m_fthresh;

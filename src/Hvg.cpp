@@ -4,6 +4,7 @@ using namespace std;
 
 //constructor 
 
+
 HVGQueue::HVGQueue(const string& qName, SimpleLogger* logger, 
             HF_Template<StateXY>* hf, 
             PriorityFunction* pf,
@@ -39,6 +40,7 @@ vector<HVGNode> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& p
         scan(child_ptr, env); //update scans
         child.vg_nodes = getVG(child); //generate child's vg graph 
         int g = shortPathFromVG(child.vg_nodes, child.s, child.s); //figure out how to access start
+        
         child.g = g;
         //set child's g value 
         children.push_back(child);

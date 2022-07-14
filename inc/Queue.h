@@ -20,7 +20,7 @@ public:
     using QNodeT = QNode<State>;
     using NodeT = Node<State>;
     
-    // Queue();
+    Queue();
     // Queue(string qName);
     Queue(const string& qName, SimpleLogger* logger, 
             HF_Template<State>* hf, 
@@ -47,11 +47,11 @@ public:
 
     string m_name;
     SimpleLogger* m_logger;
-    HF_Template<State>* m_hf;
+    HF_Template<StateXY>* m_hf;
     PriorityFunction* m_pf;
-    DuplicityChecker<State>* m_dc_check;
-    vector<DuplicityChecker<State>*> m_dc_updates;
-    AP_Template<State>* m_ap;
+    DuplicityChecker<StateXY>* m_dc_check;
+    vector<DuplicityChecker<StateXY>*> m_dc_updates;
+    AP_Template<StateXY>* m_ap;
 
 
     // bool m_admissibleQ;

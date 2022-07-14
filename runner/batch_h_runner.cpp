@@ -101,15 +101,14 @@ void RunSearchInstance(int argc, char** argv) {
     HF_Manhattan<State, StateXY>* hf1 = new HF_Manhattan<State, StateXY>(workspaceGoal, env);
     PF_Weighted* pf1 = new PF_Weighted(1);
 
-    //change this to an hvg queue for testing
-    //
-    HVGQueue* ancQ = new HVGQueue(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
-        /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
+   
 
     // Queue<State>* ancQ = new Queue<State>(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
     //     /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
     // Note that cannot use {dc_all} array initialization for make_shared<>()
 
+    HVGQueue* ancQ = new HVGQueue(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
+        /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
     BasicAStarSearch<State> astar;
     astar.m_expansionLimit = 10000;
     astar.m_timeLimit = 5000; // INTMAX // In milliseconds
