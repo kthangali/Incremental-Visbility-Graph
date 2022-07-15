@@ -51,8 +51,8 @@ struct HVGNode : public Node<StateXY>{
         double ancF;
         bool expandedAd;
         bool expandedInAd;
-        HVGNode(set<StateXY> scan_x, set<StateXY> scan_y, double g, set<StateXY> vg_nodes):
-        scan_x(scan_x), scan_y(scan_y), g(g), vg_nodes(vg_nodes){};
+        HVGNode(set<StateXY> scan_x, set<StateXY> scan_y, double g, set<StateXY> vg_nodes, StateXY s):
+        scan_x(scan_x), scan_y(scan_y), g(g), vg_nodes(vg_nodes), s(s){};
 
 };
 

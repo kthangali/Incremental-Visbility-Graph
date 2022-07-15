@@ -31,7 +31,7 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
     for (const StateXY& ac : actions) { 
         Transition<StateXY> t = env->getTransition(ac, parentState);
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        HVGNode child = HVGNode(parentNode->scan_x, parentNode->scan_y, 0, set<StateXY>()); //create child node for corresponding action 
+        HVGNode child = HVGNode(parentNode->scan_x, parentNode->scan_y, 0, set<StateXY>(), t.s); //create child node for corresponding action 
         child.scan_x = parentNode->scan_x; //copy over scans 
         child.scan_y = parentNode->scan_y;
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
@@ -61,7 +61,13 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     }
     // shared_ptr<HVGNode*> qn_HVG = dynamic_pointer_cast<HVGNode*>(qn.n); //cast qn.n to an HVG Node pointer 
     //casting from NodeT to HVGNode
-    shared_ptr<HVGNode> qn_HVG = dynamic_pointer_cast<HVGNode>(qn.n);
+    shared_ptr<HVGNode> qn_HVG;
+    //creating new HVGNode with same state as qn_HVG
+    StateXY s = qn.n->s;
+    // HVGNode temp; = nullptr;
+    HVGNode temp = HVGNode(set<StateXY>(), set<StateXY>(), 0, set<StateXY>(), qn.n->s);
+    qn_HVG = make_shared<HVGNode>(temp);
+    // qn_HVG = dynamic_pointer_cast<HVGNode>(qn.n);
     scan(qn_HVG, m_ap->m_env);
 
     //call scan on qn_HVG to get its scans 
@@ -70,6 +76,7 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     // vector<HVGNode*> expanded = {qn.n};
     // HVGNode* parent = qn.n; 
     vector<shared_ptr<HVGNode>> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
+    //get children to be correct return type
     vector<shared_ptr<Node<StateXY>>> dummy_children;
     for(auto c: children)
     {
@@ -83,7 +90,9 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
 void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to take in a q node? 
 {
     // HVGNode node_obj = node;
-    set<StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
+    // set<StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
+    // set <StateXY> scan_y = node->scan_y;
+    set <StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
     set <StateXY> scan_y = node->scan_y;
     int dX[4] = {-1,1, 0, 0}; 
     int dY[4] = {0, 0, -1, 1};
@@ -108,7 +117,7 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to 
             if(obstacle_hit)
             {
                     //add to appropriate list of partial scans 
-                    if(y_move == 0)
+                    if(y_move == 0) //if we're moving in the x direction
                     {
                         scan_x.insert(newState);
                     }
@@ -134,7 +143,7 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
     set<StateXY> scans_x = node.scan_x;
     set<StateXY> scans_y = node.scan_y;
     set<StateXY> VG {}; 
-    for(auto itr : scans_x) 
+    for(auto itr : scans_x)  //itr is a StateXY 
     {
         //if the state is in both scans_x and scans_y
         if(scans_y.count(itr) != 0){
