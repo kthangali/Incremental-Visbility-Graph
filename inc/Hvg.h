@@ -11,6 +11,7 @@
 #include "Env.h"
 #include <vector>
 #include <set>
+#include <unordered_map>    
 
 class HVGQueue : public Queue<StateXY> {
 public:
@@ -41,11 +42,8 @@ public:
     using Queue<StateXY>::m_dc_check;
     using Queue<StateXY>::m_dc_updates;
     using Queue<StateXY>::m_ap;
-    // string m_name;
-    // SimpleLogger* m_logger;
-    // HF_Template<StateXY>* m_hf;
-    // PriorityFunction* m_pf;
-    // DuplicityChecker<StateXY>* m_dc_check;
-    // vector<DuplicityChecker<StateXY>*> m_dc_updates;
-    // AP_Template<StateXY>* m_ap;
+
+
+    unordered_map<StateXY, int> paths;
 };
+

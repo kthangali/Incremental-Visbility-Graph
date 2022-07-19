@@ -37,6 +37,7 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
         scan(child_ptr, env); //update scans
         child.vg_nodes = getVG(child); //generate child's vg graph 
+        child.vg_nodes.insert(child.s);
         int g = shortPathFromVG(child.vg_nodes, child.s, child.s); //figure out how to access start
         
         child.g = g;
@@ -48,6 +49,7 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
 
 //overridden expand function 
 //not getting called, likely because it doesn't have the exact same header as queue? 
+//logic of creating a new HVG node and then re-scanning is suboptimal but casting wasn't working 
 // template <class StateXY>
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
@@ -72,11 +74,12 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
 
     //call scan on qn_HVG to get its scans 
     vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
+    // set<StateXY> vg_temp = getVG(*qn_HVG);
     // vector<HVGNode*> expanded = {qn.n};
     // vector<HVGNode*> expanded = {qn.n};
     // HVGNode* parent = qn.n; 
     vector<shared_ptr<HVGNode>> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
-    //get children to be correct return type
+    //match return type (HVGNodes are Nodes)
     vector<shared_ptr<Node<StateXY>>> dummy_children;
     for(auto c: children)
     {
@@ -103,17 +106,17 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to 
         int y_move = dY[i];
         bool obstacle_hit = false; 
         //until we hit an obstacle
+        int currPose_x = node->s.c[0]; 
+        int currPose_y = node->s.c[1];
         while(obstacle_hit == false)
         {
             //current x and y positions 
-            int currPose_x = node->s.c[0]; 
-            int currPose_y = node->s.c[1];
             int new_x = currPose_x + x_move;
             int new_y = currPose_y + y_move;
             //create new state XY with new_x and new_y
             StateXY newState = StateXY(new_x, new_y);
             //collision check the new state 
-            obstacle_hit = e->isValidState(newState);
+            obstacle_hit = !(e->isValidState(newState)); //should be true if state is not valid
             if(obstacle_hit)
             {
                     //add to appropriate list of partial scans 
@@ -126,6 +129,8 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to 
                         scan_y.insert(newState);
                     }
             }
+            currPose_x = new_x;
+            currPose_y = new_y;
 
         }
     }
@@ -142,22 +147,76 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
 {
     set<StateXY> scans_x = node.scan_x;
     set<StateXY> scans_y = node.scan_y;
+    set<tuple<int,int>> y_coords{}; //create empty set to store just x and y coordinates of y scans 
+    for(auto st : scans_y)
+    {
+        array<int, 2> c = st.c;
+        y_coords.insert(std::make_tuple(c[0], c[1]));
+    }
     set<StateXY> VG {}; 
     for(auto itr : scans_x)  //itr is a StateXY 
     {
+        array<int,2> itr_coords = itr.c;
+        tuple<int, int> temp = std::make_tuple(itr_coords[0], itr_coords[1]);
         //if the state is in both scans_x and scans_y
-        if(scans_y.count(itr) != 0){
-            VG.insert(itr);
+        if(y_coords.count(temp) != 0)
+        { //if there's a set of coordinates in both
+            VG.insert(itr); //add the corresponding state 
         }
-    }
     return VG; 
+    }
 }
 
+int custom_hash(tuple<int, int> x)
+{
+    return get<0>(x) + get<1>(x);
+}
 
-//run A* search over vg to find shortest path and return its length to be used as g value 
-//leave for last
+//brute force over vg to find shortest path from start to goal 
 int HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
 {
-    return 5;
+    vg.insert(start); //insert the start node into the vg 
+    if(start == goal){return 0;}
+    int smallest = INT_MAX;
+    // //get valid edges over vg
+    int x0 = start.c[0];
+    int y0 = start.c[1];
+    //get all edges from start and add to hashmap if not already there
+    for (auto end : vg)
+    {
+        //if the path from start to end isn't already in the hashmap
+        if(paths.find(end) == paths.end())
+        {
+            Transition<StateXY> t = m_ap->m_env->getTransition(start, end);
+            if(t.isValid)
+            {
+                int x1 = end.c[0];
+                int y1 = end.c[1];
+                int length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
+                paths.insert({end,length});
+            }
+        }
+    }
+    //check all edges from each vg node to new goal point 
+    int x1 = goal.c[0];
+    int y1 = goal.c[1];
+    for (auto itr : vg)
+    {
+        Transition<StateXY> t = m_ap->m_env->getTransition(itr, goal);
+        if(t.isValid)
+        {
+            x0 = itr.c[0];
+            y0 = itr.c[1];
+            int len = sqrt(pow(x1-x0,2) + pow(y1-y0,2));
+            int temp = paths.at(itr) + len;
+            if(len < smallest)
+            {
+                smallest = len;
+            }
+
+        }
+    }
+    return smallest;
+
 
 }
