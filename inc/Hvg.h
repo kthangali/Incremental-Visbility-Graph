@@ -27,6 +27,7 @@ public:
     set<StateXY> getVG(HVGNode node);
     int shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
     vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
+    StateXY start;
     
     //inherited
     // template<class StateXY> 
