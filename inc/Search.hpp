@@ -40,7 +40,7 @@ tuple<string, vector<State>, double> Search<State>::runSearch(State& startState)
         }
 
         // For all children nodes
-        for (shared_ptr<NodeT> &n : children) {
+        for(shared_ptr<NodeT> &n : children) {
             // Update all children with anchor stats
             m_qs[0]->updateNodeWithAnchorStats(n);
 

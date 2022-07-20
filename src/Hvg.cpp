@@ -11,25 +11,16 @@ HVGQueue::HVGQueue(const string& qName, SimpleLogger* logger,
             AP_Template<StateXY>* ap):
         Queue(qName, logger, hf, pf, dc_check,
         dc_updates, ap){};
-//new method of calculating g-value 
-//perform scanning logic over node to generate visibility graph and then perform 
-//A* search from start to node to find shortest euclidean distance, this distance becomes the g-value of the node 
-
-//write scanning/getVG/shortPathFromVG functions here 
-//update expand function to set g-value to be distance of path returned by shortPathFromVG 
 
 
-//initialize dX and dY to get through up/down/left/right
 
 //takes in parentNode/state and environment 
 //returns all the valid child nodes of parentNode with respective scans
 vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env)
 {   
-    //pass in action primitive and call ap->getActions
     vector<StateXY> actions = m_ap->getActions(parentState); //generate action space 
     vector<shared_ptr<HVGNode>> children; 
-    for (const StateXY& ac : actions) { //loop over delta x and delta y 
-        // StateXY newState = StateXY(parentState.c[0] + ac.c[0], parentState.c[1] + ac.c[1]); //create new state with x,y changes
+    for (const StateXY& ac : actions) { //loop over action space
         Transition<StateXY> t = env->getTransition(parentState, ac); //check if transition is valid 
         if(!t.isValid) {continue;} //skip if transition is invalid 
         HVGNode child = HVGNode(parentNode->scan_x, parentNode->scan_y, 0, set<StateXY>(), t.s); //create child node for corresponding action 
@@ -37,11 +28,11 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
         child.scan_y = parentNode->scan_y;
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
         scan(child_ptr, env); //update scans
-        child.vg_nodes = getVG(child); //generate child's vg graph 
-        child.vg_nodes.insert(child.s); //insert goal into the graph 
+        // child.vg_nodes = getVG(child); //generate child's vg graph 
+        child_ptr->vg_nodes = getVG(child);
+        child_ptr->vg_nodes.insert(child.s); //insert goal into the graph 
         double g = shortPathFromVG(child.vg_nodes, start, child.s); 
-        
-        child.g = g;
+        child_ptr->g = g;
         //set child's g value 
         children.push_back(child_ptr);
     }
@@ -49,8 +40,6 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
 }
 
 //overridden expand function 
-//not getting called, likely because it doesn't have the exact same header as queue? 
-//logic of creating a new HVG node and then re-scanning is suboptimal but casting wasn't working 
 // template <class StateXY>
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
@@ -134,7 +123,6 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
     //re-copy over modified scans 
     node->scan_x = scan_x;
     node->scan_y = scan_y;
-    // node = make_shared<HVGNode>(node_obj);
 }
 
 
@@ -168,21 +156,21 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
 //brute force over vg to find shortest path from start to goal 
 double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
 {
-    vg.insert(start); //insert the start node into the vg 
-    if(start == goal){return 0;}
+    vg.insert(start); //insert the start node into the vg (does nothing if it's there already)
+    if(start == goal){return 0;} //start is already goal, no path 
     double smallest = INT_MAX;
     // //get valid edges over vg
     int x0 = start.c[0];
     int y0 = start.c[1];
     int x1;
     int y1;
-    //get all edges from start and add to hashmap if not already there
+    //check through vg to add in any new edges 
     for (auto end : vg)
     {
-        //if the path from start to end isn't already in the hashmap
+        //if end isn't already in the hashmap
         if(paths.find(end) == paths.end())
         {
-            // Transition<StateXY> t = m_ap->m_env->getTransition(start, end);
+            // check validity of edge from start to end 
             bool valid = true;
             for(double k = 0.1; k <= 1; k = k + 0.1)
             {
@@ -196,6 +184,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
                     break;
                 }
             }
+            //if edge is valid, add end and length to paths
             if(valid)
             {
                 x1 = end.c[0];
@@ -210,7 +199,6 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
     y1 = goal.c[1];
     for (auto curr : vg)
     {
-        // Transition<StateXY> t = m_ap->m_env->getTransition(curr, goal);
         bool valid = true;
         for(double k = 0.1; k <= 1; k = k + 0.1)
         {
@@ -224,6 +212,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
                 break;
             }
         }
+        //think we also need to check edges between nodes aside from start 
         //if there is a valid edge from the node to goal 
         if(valid)
         {
