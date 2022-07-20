@@ -38,8 +38,8 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
         scan(child_ptr, env); //update scans
         child.vg_nodes = getVG(child); //generate child's vg graph 
-        child.vg_nodes.insert(child.s);
-        int g = shortPathFromVG(child.vg_nodes, start, child.s); //figure out how to access start
+        child.vg_nodes.insert(child.s); //insert goal into the graph 
+        double g = shortPathFromVG(child.vg_nodes, start, child.s); 
         
         child.g = g;
         //set child's g value 
@@ -88,11 +88,10 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
 }
 
 //scans in x and y directions of node and adds any hit obstacle coordinates to node's scan lists 
-void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e) //modify this to take in a q node? 
+void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 {
     // HVGNode node_obj = node;
-    // set<StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
-    // set <StateXY> scan_y = node->scan_y;
+    // set<StateXY> scan_x = node->scan_x;  
     set <StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
     set <StateXY> scan_y = node->scan_y;
     int dX[4] = {-1,1, 0, 0}; 
@@ -167,14 +166,16 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
 
 
 //brute force over vg to find shortest path from start to goal 
-int HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
+double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
 {
     vg.insert(start); //insert the start node into the vg 
     if(start == goal){return 0;}
-    int smallest = INT_MAX;
+    double smallest = INT_MAX;
     // //get valid edges over vg
     int x0 = start.c[0];
     int y0 = start.c[1];
+    int x1;
+    int y1;
     //get all edges from start and add to hashmap if not already there
     for (auto end : vg)
     {
@@ -185,8 +186,10 @@ int HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             bool valid = true;
             for(double k = 0.1; k <= 1; k = k + 0.1)
             {
-                int temp_x = x0 * k + end.c[0] * (k - 1);
-                int temp_y = y0 * k + end.c[1] * (k - 1);
+                int temp_x = min(x0,end.c[0]) + k * (abs(x0 - end.c[0]));
+                int temp_y = min(y0, end.c[1]) + k * (abs(y0 - end.c[1]));
+                // int temp_x = x0 * k + end.c[0] * (k - 1);
+                // int temp_y = y0 * k + end.c[1] * (k - 1);
                 if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
                 {
                     valid = false;
@@ -195,38 +198,40 @@ int HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             }
             if(valid)
             {
-                int x1 = end.c[0];
-                int y1 = end.c[1];
+                x1 = end.c[0];
+                y1 = end.c[1];
                 int length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
                 paths.insert({end,length});
             }
         }
     }
     //check all edges from each vg node to new goal point 
-    int x1 = goal.c[0];
-    int y1 = goal.c[1];
+    x1 = goal.c[0];
+    y1 = goal.c[1];
     for (auto curr : vg)
     {
         // Transition<StateXY> t = m_ap->m_env->getTransition(curr, goal);
         bool valid = true;
         for(double k = 0.1; k <= 1; k = k + 0.1)
         {
-            int temp_x = curr.c[0] * k + x1 * (k - 1);
-            int temp_y = curr.c[1] * k + y1 * (k - 1);
+            // int temp_x = curr.c[0] * k + x1 * (k - 1);
+            int temp_x = min(curr.c[0], x1) + k * (abs(x1 - curr.c[0]));
+            // int temp_y = curr.c[1] * k + y1 * (k - 1);
+            int temp_y = min(curr.c[1], y1) + k * (abs(y1 - curr.c[1]));
             if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
             {
                 valid = false;
                 break;
-                }
+            }
         }
-        //if there is a valid edge from the node to goal ff
+        //if there is a valid edge from the node to goal 
         if(valid)
         {
             x0 = curr.c[0];
             y0 = curr.c[1];
-            int len = sqrt(pow(x1-x0,2) + pow(y1-y0,2));
+            double len = sqrt(pow(x1-x0,2) + pow(y1-y0,2));
             //add length from curr to goal to length of start to curr 
-            int temp = paths.at(curr) + len;
+            double temp = paths.at(curr) + len;
             if(temp < smallest)
             {
                 smallest = temp;
