@@ -14,6 +14,7 @@ bool StateXY::operator==(StateXY const& other) const {
     return c[0] == other.c[0] && c[1] == other.c[1];
 }
 
+
 string StateXY::getStr() const {
     return "(" + std::to_string(c[0]) + "," + std::to_string(c[1]) + ")";
 }

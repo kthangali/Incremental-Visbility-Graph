@@ -21,9 +21,9 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
     vector<StateXY> actions = m_ap->getActions(parentState); //generate action space 
     vector<shared_ptr<HVGNode>> children; 
     for (const StateXY& ac : actions) { //loop over action space
-        Transition<StateXY> t = m_ap->m_env->getTransition(qn.n->s, ac); //check if transition is valid 
+        Transition<StateXY> t = m_ap->m_env->getTransition(parentState, ac); //check if transition is valid 
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        HVGNode child = HVGNode(parentNode->scan_x, parentNode->scan_y, 0, set<StateXY>(), t.s); //create child node for corresponding action 
+        HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, set<StateXY>()); //create child node for corresponding action 
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
 
         //copy over parent scans and generate new scans
@@ -44,6 +44,12 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
 //overridden expand function 
 // template <class StateXY>
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
+    //testing StateXY copying 
+    StateXY test = StateXY(3,6);
+    StateXY test_copy = StateXY(test);
+
+
+
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
     QNodeT qn = m_pq.top(); // Get top node  
@@ -57,7 +63,12 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     //casting from NodeT to HVGNode
     shared_ptr<HVGNode> qn_HVG;
     //creating new HVGNode with same state as qn_HVG
-    StateXY s = qn.n->s;
+    StateXY t = StateXY(qn.n->s);
+    int x = qn.n->s.c[0];
+    int y = qn.n->s.c[1];
+    cout << "qn.n->s: " << qn.n->s.getStr() << endl; 
+    cout << "t: " << t.getStr() << endl;
+    // bool equals = t == qn.n->s;
     // HVGNode temp; = nullptr;
     HVGNode temp = HVGNode(set<StateXY>(), set<StateXY>(), 0, set<StateXY>(), qn.n->s);
     temp.s = qn.n->s;
@@ -69,7 +80,7 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     //call scan on qn_HVG to get its scans 
     vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
 
-    vector<shared_ptr<HVGNode>> children = getChildren(qn_HVG, qn_HVG->s, qn, m_ap->m_env); 
+    vector<shared_ptr<HVGNode>> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
     //match return type (HVGNodes are Nodes)
     vector<shared_ptr<Node<StateXY>>> dummy_children;
     for(auto c: children)
@@ -184,14 +195,15 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
     
     for (auto end : new_nodes) //loop over all new nodes
     {
+        smallest = INT_MAX;
         for(auto s : old_nodes)
         {
             //check validity of edge from s to end 
             bool valid = true;
+            x0 = s.c[0];
+            y0 = s.c[1];
             for(double k = 0.1; k <= 1; k = k + 0.1)
             {
-                x0 = s.c[0];
-                y0 = s.c[1];
                 int temp_x = min(x0,end.c[0]) + k * (abs(x0 - end.c[0]));
                 int temp_y = min(y0, end.c[1]) + k * (abs(y0 - end.c[1]));
                 if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
@@ -218,6 +230,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
     //check all edges from each vg node to new goal point 
     x1 = goal.c[0];
     y1 = goal.c[1];
+    smallest = INT_MAX;
     for (auto curr : vg)
     {
         bool valid = true;

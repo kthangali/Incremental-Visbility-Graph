@@ -52,6 +52,11 @@ public:
 
     StateXY() {c[0] = 0; c[1] = 0;};
     StateXY(int x, int y) {c[0] = x; c[1] = y;};
+    StateXY(const StateXY& st) //copy constructor
+    {
+        c[0] = st.c[0];
+        c[1] = st.c[1];
+    };
 
     size_t customHash() const;
     bool operator==(StateXY const& other) const;
