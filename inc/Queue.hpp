@@ -61,10 +61,6 @@ assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
     for (const Transition<State>& tran : transitions) {
         if (!tran.isValid)
             continue;
-        //do scanning logic over child 
-        //get child's hvg graph and shortest path 
-        //set g value to be length of shortest path
-        //then push onto children 
         shared_ptr<NodeT> child = make_shared<NodeT>(qn.n, qn.n->g + tran.cost, -1, tran.s, false, false);
         children.push_back(child);
     }

@@ -26,7 +26,7 @@ public:
     void scan(shared_ptr<HVGNode> node, Env<StateXY>* e);
     set<StateXY> getVG(HVGNode node);
     double shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
-    vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
+    vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState,  Env<StateXY>* env);
     StateXY start;
     
     //inherited
@@ -43,6 +43,7 @@ public:
     using Queue<StateXY>::m_dc_check;
     using Queue<StateXY>::m_dc_updates;
     using Queue<StateXY>::m_ap;
+    using Queue<StateXY>::updateNodeWithAnchorStats;
 
 
     unordered_map<StateXY, int> paths;
