@@ -66,8 +66,8 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     StateXY t = StateXY(qn.n->s);
     int x = qn.n->s.c[0];
     int y = qn.n->s.c[1];
-    cout << "qn.n->s: " << qn.n->s.getStr() << endl; 
-    cout << "t: " << t.getStr() << endl;
+    // cout << "qn.n->s: " << qn.n->s.getStr() << endl; 
+    // cout << "t: " << t.getStr() << endl;
     // bool equals = t == qn.n->s;
     // HVGNode temp; = nullptr;
     HVGNode temp = HVGNode(nullptr, 0, -1, qn.n->s, false, false, set<StateXY>(), set<StateXY>(),set<StateXY>());
@@ -172,13 +172,11 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
 double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
 {
     vg.insert(start); //insert the start node into the vg (does nothing if it's there already)
+    vg.insert(goal);
     if(start == goal){return 0;} //start is already goal, no path 
     double smallest = INT_MAX;
     // //get valid edges over vg
-    int x0;
-    int y0;
-    int x1;
-    int y1;
+    int x0, y0, x1, y1;
     set<StateXY> new_nodes;
     set<StateXY> old_nodes;
     for (auto node : vg)
@@ -192,7 +190,8 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             old_nodes.insert(node);
         }
     }
-    
+    old_nodes.insert(start); //we always want the path from start 
+    paths.insert({start, 0}); //length from start to start is 0
     for (auto end : new_nodes) //loop over all new nodes
     {
         smallest = INT_MAX;

@@ -103,14 +103,14 @@ void RunSearchInstance(int argc, char** argv) {
 
    
 
-    // Queue<State>* ancQ = new Queue<State>(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
-    //     /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
+    Queue<State>* ancQ = new Queue<State>(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
+        /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
     // Note that cannot use {dc_all} array initialization for make_shared<>()
 
-    HVGQueue* ancQ = new HVGQueue(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
-        /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
+    // HVGQueue* ancQ = new HVGQueue(/*name=*/ "Anchor", /*logger=*/ sl, /*hf=*/ hf1, 
+    //     /*pf=*/ pf1, /*dc_check=*/ dc_all, /*dc_updates=*/ {dc_all}, /*ap=*/ ap);
     // //add start state to ancQ
-    ancQ->start = start;
+    // ancQ->start = start;
     BasicAStarSearch<State> astar;
     astar.m_expansionLimit = 10000;
     astar.m_timeLimit = 5000; // INTMAX // In milliseconds
