@@ -53,7 +53,7 @@ struct HVGNode : public Node<StateXY>{
         using Node::expandedInAd;
         HVGNode(const shared_ptr<Node<StateXY>>& input_parent, double input_g, double ancF, StateXY input_s, bool input_expandedAd, bool input_expandedInAd,
         set<StateXY> scan_x, set<StateXY> scan_y, set<StateXY> vg_nodes):
-        scan_x(scan_x), scan_y(scan_y), vg_nodes(vg_nodes){s = input_s; parent = input_parent; g = input_g; expandedAd = input_expandedAd; expandedInAd = input_expandedInAd};
+        scan_x(scan_x), scan_y(scan_y), vg_nodes(vg_nodes){s = input_s; parent = input_parent; g = input_g; expandedAd = input_expandedAd; expandedInAd = input_expandedInAd;};
 
 
         // HVGNode(set<StateXY> scan_x, set<StateXY> scan_y, double g, set<StateXY> vg_nodes, StateXY input_s):

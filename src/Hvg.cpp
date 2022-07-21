@@ -70,7 +70,7 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     cout << "t: " << t.getStr() << endl;
     // bool equals = t == qn.n->s;
     // HVGNode temp; = nullptr;
-    HVGNode temp = HVGNode(set<StateXY>(), set<StateXY>(), 0, set<StateXY>(), qn.n->s);
+    HVGNode temp = HVGNode(nullptr, 0, -1, qn.n->s, false, false, set<StateXY>(), set<StateXY>(),set<StateXY>());
     temp.s = qn.n->s;
     qn_HVG = make_shared<HVGNode>(temp);
     qn_HVG->s = StateXY(qn.n->s.c[0], qn.n->s.c[1]);
