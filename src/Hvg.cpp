@@ -23,7 +23,7 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
     for (const StateXY& ac : actions) { //loop over action space
         Transition<StateXY> t = m_ap->m_env->getTransition(parentState, ac); //check if transition is valid 
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, set<StateXY>()); //create child node for corresponding action 
+        HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, parentNode->vg_nodes); //create child node for corresponding action 
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
 
         //copy over parent scans and generate new scans
@@ -66,16 +66,18 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     StateXY t = StateXY(qn.n->s);
     int x = qn.n->s.c[0];
     int y = qn.n->s.c[1];
-    // cout << "qn.n->s: " << qn.n->s.getStr() << endl; 
-    // cout << "t: " << t.getStr() << endl;
-    // bool equals = t == qn.n->s;
-    // HVGNode temp; = nullptr;
+
     HVGNode temp = HVGNode(nullptr, 0, -1, qn.n->s, false, false, set<StateXY>(), set<StateXY>(),set<StateXY>());
     temp.s = qn.n->s;
     qn_HVG = make_shared<HVGNode>(temp);
     qn_HVG->s = StateXY(qn.n->s.c[0], qn.n->s.c[1]);
-    // qn_HVG = dynamic_pointer_cast<HVGNode>(qn.n);
+
     scan(qn_HVG, m_ap->m_env);
+    qn_HVG->vg_nodes = getVG(*qn_HVG); 
+    for (auto vg_node : qn_HVG->vg_nodes)
+    {
+        q_vg.insert(vg_node);
+    }
 
     //call scan on qn_HVG to get its scans 
     vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
@@ -216,7 +218,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             {
                 x1 = end.c[0];
                 y1 = end.c[1];
-                int length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
+                double length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
                 if(length + paths.at(s) < smallest)
                 {
                     smallest = length;

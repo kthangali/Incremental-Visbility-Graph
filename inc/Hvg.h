@@ -45,6 +45,7 @@ public:
     using Queue<StateXY>::m_ap;
     using Queue<StateXY>::updateNodeWithAnchorStats;
 
+    set<StateXY> q_vg; 
 
     unordered_map<StateXY, int> paths;
 };
