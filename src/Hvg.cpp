@@ -58,11 +58,22 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     shared_ptr<HVGNode> qn_HVG;
     //creating new HVGNode with same state as qn_HVG
 
-    HVGNode temp = HVGNode(nullptr, 0, -1, qn.n->s, false, false, set<StateXY>(), set<StateXY>(),set<StateXY>());
-    qn_HVG = make_shared<HVGNode>(temp);
-    qn_HVG->s = StateXY(qn.n->s.c[0], qn.n->s.c[1]);
+    HVGNode temp = HVGNode(qn.n->parent, 0, -1, qn.n->s, false, false, q_scan_x, q_scan_y,set<StateXY>());
+    qn_HVG = make_shared<HVGNode>(temp); 
+    // qn_HVG->s = StateXY(qn.n->s.c[0], qn.n->s.c[1]);
 
     scan(qn_HVG, m_ap->m_env);
+    //add any new scan nodes to overall scan
+    for(auto x : qn_HVG->scan_x)
+    {
+        q_scan_x.insert(x);
+    }
+    for(auto y : qn_HVG->scan_y)
+    {
+        q_scan_y.insert(y);
+    }
+
+    //add any new vg nodes to overall vg 
     qn_HVG->vg_nodes = getVG(*qn_HVG); 
     for (auto vg_node : qn_HVG->vg_nodes)
     {
@@ -86,9 +97,7 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
 //scans in x and y directions of node and adds any hit obstacle coordinates to node's scan lists 
 void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 {
-    // HVGNode node_obj = node;
-    // set<StateXY> scan_x = node->scan_x;  
-    set <StateXY> scan_x = node->scan_x;  //set these to be empty sets at first 
+    set <StateXY> scan_x = node->scan_x; 
     set <StateXY> scan_y = node->scan_y;
     int dX[4] = {-1,1, 0, 0}; 
     int dY[4] = {0, 0, -1, 1};
@@ -166,8 +175,8 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
     vg.insert(start); //insert the start node into the vg (does nothing if it's there already)
     vg.insert(goal);
     if(start == goal){return 0;} //start is already goal, no path 
-    double smallest = INT_MAX;
-    // //get valid edges over vg
+    double smallest;
+    // get valid edges over vg
     int x0, y0, x1, y1;
     set<StateXY> new_nodes;
     set<StateXY> old_nodes;

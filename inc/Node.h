@@ -43,14 +43,14 @@ struct HVGNode : public Node<StateXY>{
     // public: 
         set<StateXY> scan_x; 
         set<StateXY> scan_y; 
-        using Node::g; //inherit this from node
         set<StateXY> vg_nodes;
-        shared_ptr<Node<StateXY>> parent; // Used to prevent memory leaks
-        using Node::s;
         
+        using Node::g; 
+        using Node::s;
         using Node::ancF; 
         using Node::expandedAd;
         using Node::expandedInAd;
+        using Node::parent;
         HVGNode(const shared_ptr<Node<StateXY>>& input_parent, double input_g, double ancF, StateXY input_s, bool input_expandedAd, bool input_expandedInAd,
         set<StateXY> scan_x, set<StateXY> scan_y, set<StateXY> vg_nodes):
         scan_x(scan_x), scan_y(scan_y), vg_nodes(vg_nodes){s = input_s; parent = input_parent; g = input_g; expandedAd = input_expandedAd; expandedInAd = input_expandedInAd;};
