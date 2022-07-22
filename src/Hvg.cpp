@@ -44,12 +44,6 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
 //overridden expand function 
 // template <class StateXY>
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
-    //testing StateXY copying 
-    StateXY test = StateXY(3,6);
-    StateXY test_copy = StateXY(test);
-
-
-
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
     QNodeT qn = m_pq.top(); // Get top node  
@@ -63,12 +57,8 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     //casting from NodeT to HVGNode
     shared_ptr<HVGNode> qn_HVG;
     //creating new HVGNode with same state as qn_HVG
-    StateXY t = StateXY(qn.n->s);
-    int x = qn.n->s.c[0];
-    int y = qn.n->s.c[1];
 
     HVGNode temp = HVGNode(nullptr, 0, -1, qn.n->s, false, false, set<StateXY>(), set<StateXY>(),set<StateXY>());
-    temp.s = qn.n->s;
     qn_HVG = make_shared<HVGNode>(temp);
     qn_HVG->s = StateXY(qn.n->s.c[0], qn.n->s.c[1]);
 
