@@ -53,7 +53,6 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     for (DuplicityChecker<StateXY>* dc: m_dc_updates) { // Updates Duplicity Checkers
         dc->updateDuplicity(qn);
     }
-    // shared_ptr<HVGNode*> qn_HVG = dynamic_pointer_cast<HVGNode*>(qn.n); //cast qn.n to an HVG Node pointer 
     //casting from NodeT to HVGNode
     shared_ptr<HVGNode> qn_HVG;
     //creating new HVGNode with same state as qn_HVG

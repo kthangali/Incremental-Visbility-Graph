@@ -49,6 +49,6 @@ public:
     set<StateXY> q_scan_x; 
     set<StateXY> q_scan_y; 
 
-    unordered_map<StateXY, int> paths;
+    unordered_map<StateXY, double> paths;
 };
 
