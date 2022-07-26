@@ -25,12 +25,19 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
         if(!t.isValid) {continue;} //skip if transition is invalid 
         HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, parentNode->vg_nodes); //create child node for corresponding action 
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
-
-        //copy over parent scans and generate new scans
-        child_ptr->scan_x = parentNode->scan_x;
-        child_ptr->scan_y = parentNode->scan_y;
+        
+        //generate new scans
         scan(child_ptr, env); //update scans
-    
+        for(auto n : child_ptr->scan_x)
+        {
+            q_scan_x.insert(n);
+        }
+        for(auto n : child_ptr->scan_y)
+        {
+            q_scan_y.insert(n);
+        }
+
+        //should keep vg nodes of parent node since we're using previous scans 
         child_ptr->vg_nodes = getVG(child);
         child_ptr->vg_nodes.insert(child.s); //insert goal into the graph 
         double g = shortPathFromVG(child.vg_nodes, start, child.s); 
@@ -96,6 +103,8 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
 //scans in x and y directions of node and adds any hit obstacle coordinates to node's scan lists 
 void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 {
+    // set <StateXY> scan_x = node->scan_x; 
+    // set <StateXY> scan_y = node->scan_y;
     set <StateXY> scan_x = node->scan_x; 
     set <StateXY> scan_y = node->scan_y;
     int dX[4] = {-1,1, 0, 0}; 
@@ -145,26 +154,26 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 //Output: set of stateXY objects present in both, indicating obstacle corner 
 set<StateXY> HVGQueue::getVG(HVGNode node)
 {
-    set<StateXY> scans_x = node.scan_x;
-    set<StateXY> scans_y = node.scan_y;
+    // set<StateXY> scans_x = node.scan_x;
+    // set<StateXY> scans_y = node.scan_y;
+    set<StateXY> scans_x = q_scan_x;
+    set<StateXY> scans_y = q_scan_y;
     set<tuple<int,int>> y_coords{}; //create empty set to store just x and y coordinates of y scans 
-    for(auto st : scans_y)
+    for(auto itr_x : scans_x)  //itr is a StateXY 
     {
-        array<int, 2> c = st.c;
-        y_coords.insert(std::make_tuple(c[0], c[1]));
-    }
-    set<StateXY> VG {}; 
-    for(auto itr : scans_x)  //itr is a StateXY 
-    {
-        array<int,2> itr_coords = itr.c;
-        tuple<int, int> temp = std::make_tuple(itr_coords[0], itr_coords[1]);
-        //if the state is in both scans_x and scans_y
-        if(y_coords.count(temp) != 0)
-        { //if there's a set of coordinates in both
-            VG.insert(itr); //add the corresponding state 
+        // cout << "x[0]: " << itr_x.c[0] << " " << "x[1]: " << itr_x.c[1] << endl;
+        for(auto itr_y : scans_y)
+        {
+            if(itr_y.c[0] == itr_x.c[0] && itr_y.c[1] == itr_x.c[1])
+            {
+                q_vg.insert(itr_y);
+            }
+            // cout << "y[0]: " << itr_y.c[0] << " " << "y[1]: " << itr_y.c[1] << endl;
         }
-    return VG; 
+        // cout << "break" << endl;
     }
+    // cout << "end fn call" << endl;
+    return q_vg; 
 }
 
 
@@ -201,9 +210,14 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             bool valid = true;
             x0 = s.c[0];
             y0 = s.c[1];
+            if(s == end)
+            {
+                paths.insert({end, 0});
+                break;
+            }
             for(double k = 0.1; k <= 1; k = k + 0.1)
             {
-                int temp_x = min(x0,end.c[0]) + k * (abs(x0 - end.c[0]));
+                int temp_x = min(x0, end.c[0]) + k * (abs(x0 - end.c[0]));
                 int temp_y = min(y0, end.c[1]) + k * (abs(y0 - end.c[1]));
                 if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
                 {
@@ -258,6 +272,11 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             }
 
         }
+    }
+    //if the goal is not a vg node
+    if(vg.count(goal) == 0 && paths.find(goal) != paths.end()) 
+    {
+        paths.erase(goal);
     }
     return smallest;
 }
