@@ -25,7 +25,7 @@ public:
     //new functions
     void scan(shared_ptr<HVGNode> node, Env<StateXY>* e);
     set<StateXY> getVG(HVGNode node);
-    double shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal);
+    double shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal, bool goalFound);
     vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
     StateXY start;
     
@@ -48,7 +48,9 @@ public:
     set<StateXY> q_vg; 
     set<StateXY> q_scan_x; 
     set<StateXY> q_scan_y; 
+    vector<StateXY> getHVGPath(StateXY goal);
 
-    unordered_map<StateXY, double> paths;
+
+    unordered_map<StateXY, tuple<shared_ptr<StateXY>, double>> paths;
 };
 

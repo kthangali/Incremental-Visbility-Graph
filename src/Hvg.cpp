@@ -40,7 +40,7 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
         //should keep vg nodes of parent node since we're using previous scans 
         child_ptr->vg_nodes = getVG(child);
         child_ptr->vg_nodes.insert(child.s); //insert goal into the graph 
-        double g = shortPathFromVG(child.vg_nodes, start, child.s); 
+        double g = shortPathFromVG(child.vg_nodes, start, child.s, false); 
         child_ptr->g = g;
         //set child's g value 
         children.push_back(child_ptr);
@@ -168,22 +168,21 @@ set<StateXY> HVGQueue::getVG(HVGNode node)
             {
                 q_vg.insert(itr_y);
             }
-            // cout << "y[0]: " << itr_y.c[0] << " " << "y[1]: " << itr_y.c[1] << endl;
         }
-        // cout << "break" << endl;
     }
-    // cout << "end fn call" << endl;
     return q_vg; 
 }
 
 
 //brute force over vg to find shortest path from start to goal 
-double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
+double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY goal, bool goalFound)
 {
+    set<StateXY> vg = vg_temp;
     vg.insert(start); //insert the start node into the vg (does nothing if it's there already)
     vg.insert(goal);
     if(start == goal){return 0;} //start is already goal, no path 
     double smallest;
+    shared_ptr<StateXY> p;
     // get valid edges over vg
     int x0, y0, x1, y1;
     set<StateXY> new_nodes;
@@ -200,26 +199,24 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
         }
     }
     old_nodes.insert(start); //we always want the path from start 
-    paths.insert({start, 0}); //length from start to start is 0
+    paths.insert({start, make_tuple(nullptr, 0)}); //length from start to start is 0
+    //checking for / adding new edges 
     for (auto end : new_nodes) //loop over all new nodes
     {
         smallest = INT_MAX;
+        p = nullptr;
         for(auto s : old_nodes)
         {
             //check validity of edge from s to end 
             bool valid = true;
             x0 = s.c[0];
             y0 = s.c[1];
-            if(s == end)
-            {
-                paths.insert({end, 0});
-                break;
-            }
             for(double k = 0.1; k <= 1; k = k + 0.1)
             {
                 int temp_x = min(x0, end.c[0]) + k * (abs(x0 - end.c[0]));
                 int temp_y = min(y0, end.c[1]) + k * (abs(y0 - end.c[1]));
-                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
+                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && temp_x != end.c[0] && temp_y != end.c[1]
+                && temp_x != x0 && temp_y != y0)
                 {
                     valid = false;
                     break;
@@ -231,19 +228,23 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
                 x1 = end.c[0];
                 y1 = end.c[1];
                 double length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
-                if(length + paths.at(s) < smallest)
+                if(length + get<1>(paths.at(s)) < smallest)
                 {
-                    smallest = length;
+                    smallest = length + get<1>(paths.at(s));
+                    p = make_shared<StateXY>(s);
+
                 }
             }
         }
-        paths.insert({end, smallest});
+        paths.insert({end, make_tuple(p, smallest)});
     }
     
     //check all edges from each vg node to new goal point 
+    //finding shortest path to goal 
     x1 = goal.c[0];
     y1 = goal.c[1];
     smallest = INT_MAX;
+    p = nullptr;
     for (auto curr : vg)
     {
         bool valid = true;
@@ -251,13 +252,13 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
         {
             int temp_x = min(curr.c[0], x1) + k * (abs(x1 - curr.c[0]));
             int temp_y = min(curr.c[1], y1) + k * (abs(y1 - curr.c[1]));
-            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
+            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && temp_x != x1 && temp_y != y1
+                && temp_x != curr.c[0] && temp_y != curr.c[1])
             {
                 valid = false;
                 break;
             }
         }
-        //think we also need to check edges between nodes aside from start 
         //if there is a valid edge from the node to goal 
         if(valid)
         {
@@ -265,18 +266,45 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal)
             y0 = curr.c[1];
             double len = sqrt(pow(x1-x0,2) + pow(y1-y0,2));
             //add length from curr to goal to length of start to curr 
-            double temp = paths.at(curr) + len;
+            double temp = get<1>(paths.at(curr)) + len;
             if(temp < smallest)
             {
                 smallest = temp;
+                p = make_shared<StateXY>(curr);
             }
 
         }
     }
-    //if the goal is not a vg node
-    if(vg.count(goal) == 0 && paths.find(goal) != paths.end()) 
+    bool in_vg = false;
+    for(auto node : vg)
+    {
+        if(node.c[0] == goal.c[0] && node.c[1] == goal.c[1])
+        {
+            in_vg = true;
+        }
+    }
+    if(in_vg && goalFound == false)
     {
         paths.erase(goal);
     }
+
+    
     return smallest;
 }
+
+vector<StateXY> HVGQueue::getHVGPath(StateXY goal)
+    {
+        vector<StateXY> path; 
+        path.push_back(goal);
+        StateXY t = goal;
+        shared_ptr<StateXY> temp = get<0>(paths.at(goal));
+        while(get<0>(paths.at(goal)) != nullptr)
+        {
+            path.push_back(*get<0>(paths.at(goal)));
+            goal = *get<0>(paths.at(goal));
+        }
+        
+        reverse(path.begin(), path.end());
+        return path; 
+
+    }
