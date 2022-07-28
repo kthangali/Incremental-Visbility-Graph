@@ -27,6 +27,7 @@ public:
     set<StateXY> getVG(HVGNode node);
     double shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal, bool goalFound);
     vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
+    bool collisionCheck(StateXY start, StateXY end);
     StateXY start;
     
     //inherited

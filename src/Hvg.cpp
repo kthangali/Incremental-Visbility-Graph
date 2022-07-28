@@ -182,11 +182,13 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     vg.insert(goal);
     if(start == goal){return 0;} //start is already goal, no path 
     double smallest;
+    double length;
     shared_ptr<StateXY> p;
     // get valid edges over vg
     int x0, y0, x1, y1;
     set<StateXY> new_nodes;
     set<StateXY> old_nodes;
+    bool valid;
     for (auto node : vg)
     {
         if(paths.find(node) == paths.end()) //node is new
@@ -208,26 +210,17 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
         for(auto s : old_nodes)
         {
             //check validity of edge from s to end 
-            bool valid = true;
-            x0 = s.c[0];
-            y0 = s.c[1];
-            for(double k = 0.1; k <= 1; k = k + 0.1)
-            {
-                int temp_x = min(x0, end.c[0]) + k * (abs(x0 - end.c[0]));
-                int temp_y = min(y0, end.c[1]) + k * (abs(y0 - end.c[1]));
-                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && temp_x != end.c[0] && temp_y != end.c[1]
-                && temp_x != x0 && temp_y != y0)
-                {
-                    valid = false;
-                    break;
-                }
-            }
-            //if edge is valid, check if length from start to s + length from s to end is smallest so far 
+            if(s == end){continue;}
+            valid = collisionCheck(s, end);
             if(valid)
             {
                 x1 = end.c[0];
                 y1 = end.c[1];
-                double length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
+                x0 = s.c[0];
+                y0 = s.c[1];
+                int in = pow(x1 - x0, 2) + pow(y1 - y0, 2);
+                double sq = sqrt(in);
+                length = sqrt(pow(x1 - x0, 2) + pow(y1 - y0, 2));
                 if(length + get<1>(paths.at(s)) < smallest)
                 {
                     smallest = length + get<1>(paths.at(s));
@@ -244,33 +237,21 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     x1 = goal.c[0];
     y1 = goal.c[1];
     smallest = INT_MAX;
-    p = nullptr;
+    // p = nullptr;
     for (auto curr : vg)
     {
-        bool valid = true;
-        for(double k = 0.1; k <= 1; k = k + 0.1)
-        {
-            int temp_x = min(curr.c[0], x1) + k * (abs(x1 - curr.c[0]));
-            int temp_y = min(curr.c[1], y1) + k * (abs(y1 - curr.c[1]));
-            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && temp_x != x1 && temp_y != y1
-                && temp_x != curr.c[0] && temp_y != curr.c[1])
-            {
-                valid = false;
-                break;
-            }
-        }
-        //if there is a valid edge from the node to goal 
+        valid = collisionCheck(curr, goal);
         if(valid)
         {
             x0 = curr.c[0];
             y0 = curr.c[1];
-            double len = sqrt(pow(x1-x0,2) + pow(y1-y0,2));
+            length = sqrt(pow(x1-x0,2) + pow(y1-y0,2));
             //add length from curr to goal to length of start to curr 
-            double temp = get<1>(paths.at(curr)) + len;
+            double temp = get<1>(paths.at(curr)) + length;
             if(temp < smallest)
             {
                 smallest = temp;
-                p = make_shared<StateXY>(curr);
+                // p = make_shared<StateXY>(curr);
             }
 
         }
@@ -287,9 +268,139 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     {
         paths.erase(goal);
     }
-
-    
+    bool t = collisionCheck(StateXY(10,3), StateXY(9,9));
     return smallest;
+}
+
+bool HVGQueue::collisionCheck(StateXY start, StateXY end)
+{
+    //if x of start and goal is the same or y of start and goal is the same then 
+    //we're checking a straight edge - check both sides 
+    //otherwise collision check normally 
+    int startX = start.c[0];
+    int startY = start.c[1];
+    int endX = end.c[0];
+    int endY = end.c[1];
+    int temp_x;
+    int temp_y;
+    bool valid;
+    if(startX == endX) //vertical edge, try rounding left and right
+    {
+        valid = true; 
+        //check current column
+        temp_x = startX;
+        for(double k = 0.1; k <= 1; k = k + 0.1)
+        {
+            temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
+            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
+                && (temp_x != endX || temp_y != endY))
+            {
+                valid = false;
+                break;
+            }    
+        }
+        if(valid == false)
+        {
+            //check down left side
+            valid = true;
+            temp_x = startX - 1;
+            for(double k = 0.1; k <= 1; k = k + 0.1)
+            {
+                temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
+                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
+                && (temp_x != endX || temp_y != endY))
+                {
+                    valid = false;
+                    break;
+                }    
+            }
+        }
+        if(valid == false) //check the right side
+        {
+            valid = true; 
+            temp_x = startX + 1;
+            for(double k = 0.1; k <= 1; k = k + 0.1)
+            {
+                temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
+                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
+                && (temp_x != endX || temp_y != endY))
+                {
+                    valid = false;
+                    break;
+                }    
+            }
+        }
+    }
+
+    else if(startY == endY) //horizontal edge, check up and down
+    {
+        valid = true; 
+        //check the same row
+        temp_y = startY;
+        for(double k = 0.1; k <= 1; k = k + 0.1)
+        {
+            temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
+            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
+                && (temp_x != endX || temp_y != endY))
+            {
+                valid = false;
+                break;
+            }    
+        }
+        if(valid == false)
+        {
+            //check up
+            valid = true;
+            temp_y = startY - 1;
+            for(double k = 0.1; k <= 1; k = k + 0.1)
+            {
+                temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
+                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
+                && (temp_x != endX || temp_y != endY))
+                {
+                    valid = false;
+                    break;
+                }    
+            }
+        }
+        if(valid == false) //check down
+        {
+            valid = true; 
+            temp_y = startY + 1;
+            for(double k = 0.1; k <= 1; k = k + 0.1)
+            {
+                temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
+                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
+                && (temp_x != endX || temp_y != endY))
+                {
+                    valid = false;
+                    break;
+                }    
+            }
+        }
+    }
+    else
+    {
+        valid = true;
+        for(double k = 0.1; k <= 1; k = k + 0.1)
+        {
+            temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
+            temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
+            bool v = m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) == false; 
+            bool xCheck = temp_x != startX && temp_x != endX;
+            bool yCheck = temp_y != startY && temp_y != endY;
+            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && 
+                startX != temp_x && startY != temp_y && 
+                make_tuple(endX, endY) != make_tuple(temp_x, temp_y))
+            {
+                    valid = false;
+                    break;
+            }
+        }
+    }
+    return valid;
+    
+
 }
 
 vector<StateXY> HVGQueue::getHVGPath(StateXY goal)
