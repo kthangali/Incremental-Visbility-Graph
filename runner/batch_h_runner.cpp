@@ -127,7 +127,7 @@ void RunSearchInstance(int argc, char** argv) {
     tie(status, path, cost) = astar.runSearch(start);
     cout << status << " " << cost << endl; 
     cout << getPathString(path) << endl;    
-    int dummy = ancQ->shortPathFromVG(ancQ->q_vg, start, workspaceGoal, true);
+    double dummy = ancQ->shortPathFromVG(ancQ->q_vg, start, workspaceGoal, true);
     vector<StateXY> HVGPath = ancQ->getHVGPath(workspaceGoal);
     cout << "HVG Path" << endl;
     cout << getPathString(HVGPath) << endl;

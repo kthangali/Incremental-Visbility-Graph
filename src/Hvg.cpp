@@ -23,7 +23,8 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
     for (const StateXY& ac : actions) { //loop over action space
         Transition<StateXY> t = m_ap->m_env->getTransition(parentState, ac); //check if transition is valid 
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, parentNode->vg_nodes); //create child node for corresponding action 
+        // HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, parentNode->vg_nodes); //create child node for corresponding action 
+        HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, q_scan_x, q_scan_y, q_vg); //create child node for corresponding action 
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
         
         //generate new scans
@@ -263,7 +264,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     {
         paths.erase(goal);
     }
-    bool t = collisionCheck(StateXY(11,4), StateXY(14,12));
+    bool t = collisionCheck(StateXY(21,9), StateXY(4,9));
     return smallest;
 }
 
@@ -285,6 +286,66 @@ bool HVGQueue::validityCheck(int x, int y, int startX, int startY, int endX, int
         return true;
 }
 
+bool HVGQueue::isObstacleSide(int startX, int startY, int endX, int endY)
+{
+    if(startX == endX) //vertical
+    {
+        for(int k = min(startY, endY); k <= max(startY, endY); k++)
+        {
+            if(m_ap->m_env->isValidState(StateXY(startX, k))) //some valid state in between
+            {
+                return false;
+            }
+        }
+        //startY to endY is all invalid 
+        //check left side
+        for(int k = min(startY, endY); k <= max(startY, endY); k++)
+        {
+            if(!m_ap->m_env->isValidState(StateXY(startX - 1, k)))
+            {
+                //check the right side
+                for(int k = min(startY, endY); k <= max(startY, endY); k++)
+                {
+                    if(!m_ap->m_env->isValidState(StateXY(startX + 1, k)))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return true;
+    }
+    else
+    {
+        for(int k = min(startX, endX); k <= max(startX, endX); k++)
+        {
+            if(m_ap->m_env->isValidState(StateXY(k, startY))) //some valid state in between
+            {
+                return false;
+            }
+        }
+        //check down
+        for(int k = min(startX, endX); k <= max(startX, endX); k++)
+        {
+            if(!m_ap->m_env->isValidState(StateXY(k , startY + 1)))
+            {
+                //check the up side
+                for(int k = min(startX, endX); k <= max(startX, endX); k++)
+                {
+                    if(!m_ap->m_env->isValidState(StateXY(k, startY - 1)))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return true;
+
+    }
+    return true;
+}
 
 bool HVGQueue::collisionCheck(StateXY start, StateXY end)
 {
@@ -303,46 +364,19 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
         valid = true; 
         //check current column
         temp_x = startX;
-        for(double k = 0.1; k <= 1; k = k + 0.1)
+        if(isObstacleSide(startX, startY, endX, endY))
         {
+            return true;
+        }
+        for(double k = min(startX, endX) + 1; k < max(startX, endX); k++)
+        {
+            temp_x = k;
             temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
-            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
-                && (temp_x != endX || temp_y != endY))
+            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
             {
                 valid = false;
                 break;
             }    
-        }
-        if(valid == false)
-        {
-            //check down left side
-            valid = true;
-            temp_x = startX - 1;
-            for(double k = 0.1; k <= 1; k = k + 0.1)
-            {
-                temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
-                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
-                && (temp_x != endX || temp_y != endY))
-                {
-                    valid = false;
-                    break;
-                }    
-            }
-        }
-        if(valid == false) //check the right side
-        {
-            valid = true; 
-            temp_x = startX + 1;
-            for(double k = 0.1; k <= 1; k = k + 0.1)
-            {
-                temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
-                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
-                && (temp_x != endX || temp_y != endY))
-                {
-                    valid = false;
-                    break;
-                }    
-            }
         }
     }
 
@@ -351,46 +385,18 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
         valid = true; 
         //check the same row
         temp_y = startY;
-        for(double k = 0.1; k <= 1; k = k + 0.1)
+        if(isObstacleSide(startX, startY, endX, endY))
         {
-            temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
-            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
-                && (temp_x != endX || temp_y != endY))
+            return true;
+        }
+        for(double k = min(startX, endX) + 1; k < max(startX, endX); k++)
+        {
+            temp_x = k;
+            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
             {
                 valid = false;
                 break;
             }    
-        }
-        if(valid == false)
-        {
-            //check up
-            valid = true;
-            temp_y = startY - 1;
-            for(double k = 0.1; k <= 1; k = k + 0.1)
-            {
-                temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
-                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
-                && (temp_x != endX || temp_y != endY))
-                {
-                    valid = false;
-                    break;
-                }    
-            }
-        }
-        if(valid == false) //check down
-        {
-            valid = true; 
-            temp_y = startY + 1;
-            for(double k = 0.1; k <= 1; k = k + 0.1)
-            {
-                temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
-                if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && (temp_x != startX || temp_y != startY)
-                && (temp_x != endX || temp_y != endY))
-                {
-                    valid = false;
-                    break;
-                }    
-            }
         }
     }
     else
@@ -407,14 +413,6 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
             endY = tempEnd;
         }
         double m = abs(float(endY - startY) / float(endX - startX));
-        // if(endY > startY) //slop is negative
-        // {
-        //     m = abs(m) * -1;
-        // }
-        // else
-        // {
-        //     m = abs(m);
-        // }
         for(double k = 0.1; k <= 1; k += 0.1)
         {
             temp_x = startX + k * abs(endX - startX);
@@ -434,7 +432,6 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
                     valid = false;
                     break;
                 }
-                
             }
             else
             {
@@ -448,8 +445,6 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
     return valid;
     
 }
-
-
 
 vector<StateXY> HVGQueue::getHVGPath(StateXY goal)
     {
