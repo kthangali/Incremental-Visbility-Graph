@@ -28,6 +28,7 @@ public:
     double shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal, bool goalFound);
     vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
     bool collisionCheck(StateXY start, StateXY end);
+    bool validityCheck(int x, int y, int startX, int startY, int endX, int endY);
     StateXY start;
     
     //inherited

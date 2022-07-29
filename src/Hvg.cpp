@@ -103,8 +103,6 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
 //scans in x and y directions of node and adds any hit obstacle coordinates to node's scan lists 
 void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 {
-    // set <StateXY> scan_x = node->scan_x; 
-    // set <StateXY> scan_y = node->scan_y;
     set <StateXY> scan_x = node->scan_x; 
     set <StateXY> scan_y = node->scan_y;
     int dX[4] = {-1,1, 0, 0}; 
@@ -154,14 +152,11 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 //Output: set of stateXY objects present in both, indicating obstacle corner 
 set<StateXY> HVGQueue::getVG(HVGNode node)
 {
-    // set<StateXY> scans_x = node.scan_x;
-    // set<StateXY> scans_y = node.scan_y;
     set<StateXY> scans_x = q_scan_x;
     set<StateXY> scans_y = q_scan_y;
     set<tuple<int,int>> y_coords{}; //create empty set to store just x and y coordinates of y scans 
     for(auto itr_x : scans_x)  //itr is a StateXY 
     {
-        // cout << "x[0]: " << itr_x.c[0] << " " << "x[1]: " << itr_x.c[1] << endl;
         for(auto itr_y : scans_y)
         {
             if(itr_y.c[0] == itr_x.c[0] && itr_y.c[1] == itr_x.c[1])
@@ -268,9 +263,28 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     {
         paths.erase(goal);
     }
-    bool t = collisionCheck(StateXY(10,3), StateXY(9,9));
+    bool t = collisionCheck(StateXY(11,4), StateXY(14,12));
     return smallest;
 }
+
+bool HVGQueue::validityCheck(int x, int y, int startX, int startY, int endX, int endY)
+{
+        int temp_x = x;
+        int temp_y = y; 
+        if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
+        {
+            if(startX <= temp_x && temp_x <= endX && 
+                min(startY, endY) <= temp_y && 
+                temp_y <= max(startY, endY)
+                && make_tuple(startX, startY) != make_tuple(temp_x, temp_y)
+                && make_tuple(endX, endY) != make_tuple(temp_x, temp_y))
+                {
+                    return false;
+                }
+        }
+        return true;
+}
+
 
 bool HVGQueue::collisionCheck(StateXY start, StateXY end)
 {
@@ -281,8 +295,8 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
     int startY = start.c[1];
     int endX = end.c[0];
     int endY = end.c[1];
-    int temp_x;
-    int temp_y;
+    double temp_x;
+    double temp_y;
     bool valid;
     if(startX == endX) //vertical edge, try rounding left and right
     {
@@ -382,26 +396,60 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
     else
     {
         valid = true;
-        for(double k = 0.1; k <= 1; k = k + 0.1)
+        //put in terms of left to right 
+        if(endX < startX) 
         {
-            temp_x = round(min(startX, endX) + k * (abs(startX - endX)));
-            temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
-            bool v = m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) == false; 
-            bool xCheck = temp_x != startX && temp_x != endX;
-            bool yCheck = temp_y != startY && temp_y != endY;
-            if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)) && 
-                startX != temp_x && startY != temp_y && 
-                make_tuple(endX, endY) != make_tuple(temp_x, temp_y))
+            int tempStart = startX;
+            int tempEnd = startY;
+            startX = endX;
+            startY = endY;
+            endX = tempStart;
+            endY = tempEnd;
+        }
+        double m = abs(float(endY - startY) / float(endX - startX));
+        // if(endY > startY) //slop is negative
+        // {
+        //     m = abs(m) * -1;
+        // }
+        // else
+        // {
+        //     m = abs(m);
+        // }
+        for(double k = 0.1; k <= 1; k += 0.1)
+        {
+            temp_x = startX + k * abs(endX - startX);
+            if(endY < startY) //positive slope
             {
+                temp_y = round(startY - (temp_x - startX) * m);
+            }
+            else //negative slope
+            {
+                temp_y = round(startY + (temp_x - startX) * m);
+            }
+            if(temp_x - int(temp_x) == 0.5)
+            {
+                if(!validityCheck(round(temp_x), temp_y, startX, startY, endX, endY) && 
+                !validityCheck(int(temp_x), temp_y, startX, startY, endX, endY))
+                {
                     valid = false;
                     break;
+                }
+                
+            }
+            else
+            {
+                if(!validityCheck(round(temp_x), temp_y, startX, startY, endX, endY))
+                {
+                    return false;
+                }
             }
         }
     }
     return valid;
     
-
 }
+
+
 
 vector<StateXY> HVGQueue::getHVGPath(StateXY goal)
     {
