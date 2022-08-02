@@ -129,25 +129,7 @@ void RunSearchInstance(int argc, char** argv) {
     cout << "Grid Path" << endl;
     cout << getPathString(path) << endl;    
     double dummy = ancQ->shortPathFromVG(ancQ->q_vg, start, workspaceGoal, true);
-    // string x_sc = "";
-    // for (auto itr_x : ancQ->q_scan_x)
-    // {
-    //     x_sc += itr_x.getStr() + ",";
-    // }
-    // cout << "x scans: " << x_sc << endl;
 
-    // string y_sc = "";
-    // for (auto itr_y : ancQ->q_scan_y)
-    // {
-    //     y_sc += itr_y.getStr() + ",";
-    // }
-    // cout << "y scans: " << y_sc << endl;
-    // string exp_nodes = "";
-    // for(auto st : ancQ->expanded_states)
-    // {
-    //     exp_nodes += st.getStr() + ",";
-    // }
-    // cout << "expanded nodes: " << exp_nodes << endl;
 
     vector<StateXY> HVGPath = ancQ->getHVGPath(workspaceGoal);
     cout << "HVG Path" << endl;

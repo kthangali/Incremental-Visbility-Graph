@@ -268,8 +268,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     {
         paths.erase(goal);
     }
-    bool c = checkAngledEdge(9, 9, 14, 12);
-    checkAngledEdge(22, 18, 40, 14);
+    bool c = checkAngledEdge(1, 6, 8, 2);
     return smallest;
 }
 
@@ -369,7 +368,7 @@ bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
         dX = x_dirs[i];
         dY = y_dirs[i];
         valid = true;
-        for(double k = 0.1; k < 1; k += 0.1)
+        for(double k = 0.025; k < 1; k += 0.025)
         {
             temp_x = (startX + dX) * (k) + (endX + dX) * (1-k); 
             temp_y = (startY + dY) * (k) + (endY + dY) * (1-k);
