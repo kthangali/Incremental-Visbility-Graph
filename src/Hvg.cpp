@@ -158,7 +158,7 @@ set<StateXY> HVGQueue::getVG()
     //q_scan_x and q_scan_y contain all the previous scans + scans from node
     set<StateXY> scans_x = q_scan_x;
     set<StateXY> scans_y = q_scan_y;
-    //can just loop over x because w only care about what's in both of the scans
+
     for(auto itr_x : scans_x)  //itr is a StateXY 
     {
         for(auto itr_y : scans_y)
@@ -268,12 +268,13 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     {
         paths.erase(goal);
     }
-    bool c = checkAngledEdge(1, 6, 8, 2);
+    bool c = checkAngledEdge(4, 8, 10, 4);
     return smallest;
 }
 
 
-//returns true if (x,y) is valid on the edge from (startX, startY) to (endX, endY)
+//Helper function for edge checking 
+//Returns true if (x,y) is valid on the straight edge from start to end 
 bool HVGQueue::validityCheck(int x, int y, int startX, int startY, int endX, int endY)
 {
         int temp_x = x;
@@ -290,8 +291,8 @@ bool HVGQueue::validityCheck(int x, int y, int startX, int startY, int endX, int
         return true;
 }
 
-//returns true if the edge from (startX, startY) to (endX, endY) is an edge along
-// the side of an obstacle
+//Helper function for edge checking 
+//Returns true if the straight edge from start to end is along an obstacle edge
 bool HVGQueue::isObstacleSide(int startX, int startY, int endX, int endY)
 {
     if(startX == endX) //vertical
@@ -353,6 +354,8 @@ bool HVGQueue::isObstacleSide(int startX, int startY, int endX, int endY)
     return true;
 }
 
+//Helper function for collision check
+//Checks validity of non grid-aligned edges
 bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
 {
     double temp_x;
@@ -362,6 +365,7 @@ bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
     double x_dirs[4] = {-0.5, -0.5, 0.5, 0.5};
     double y_dirs[4] = {0.5, -0.5, 0.5, -0.5};
     bool valid = true;
+    set<StateXY> checkedStates = set<StateXY>();
 
     for(int i = 0; i < 4; i++)
     {
@@ -372,6 +376,10 @@ bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
         {
             temp_x = (startX + dX) * (k) + (endX + dX) * (1-k); 
             temp_y = (startY + dY) * (k) + (endY + dY) * (1-k);
+            if(checkedStates.count(StateXY(round(temp_x), round(temp_y))) != 0)
+            {
+                continue;
+            }
             if(temp_x - int(temp_x) == 0.5 && temp_y - int(temp_y) == 0.5)
             {
                 continue;
@@ -384,6 +392,7 @@ bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
                     break;
                 }
             } 
+            checkedStates.insert(StateXY(round(temp_x), round(temp_y)));
         }
         if(valid == true) {return true;}
     }
@@ -393,9 +402,6 @@ bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
 
 bool HVGQueue::collisionCheck(StateXY start, StateXY end)
 {
-    //if x of start and goal is the same or y of start and goal is the same then 
-    //we're checking a straight edge - check both sides 
-    //otherwise collision check normally 
     int startX = start.c[0];
     int startY = start.c[1];
     int endX = end.c[0];
@@ -403,7 +409,7 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
     double temp_x;
     double temp_y;
     bool valid;
-    if(startX == endX) //vertical edge, try rounding left and right
+    if(startX == endX) //vertical edge
     {
         valid = true; 
         //check current column
@@ -423,7 +429,7 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
         }
     }
 
-    else if(startY == endY) //horizontal edge, check up and down
+    else if(startY == endY) //horizontal edge
     {
         valid = true; 
         //check the same row
@@ -450,6 +456,8 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
     
 }
 
+
+//generates HVG path by backtracking through parent pointers 
 vector<StateXY> HVGQueue::getHVGPath(StateXY goal)
     {
         vector<StateXY> path; 
