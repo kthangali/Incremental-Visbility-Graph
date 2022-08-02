@@ -23,8 +23,9 @@ public:
             AP_Template<StateXY>* ap);
 
     //new functions
+
     void scan(shared_ptr<HVGNode> node, Env<StateXY>* e);
-    set<StateXY> getVG(HVGNode node);
+    set<StateXY> getVG();
     double shortPathFromVG(set<StateXY> vg, StateXY start, StateXY goal, bool goalFound);
     vector<shared_ptr<HVGNode>> getChildren(shared_ptr<HVGNode> parentNode, StateXY& parentState, Env<StateXY>* env);
     bool collisionCheck(StateXY start, StateXY end);
@@ -52,6 +53,8 @@ public:
     set<StateXY> q_scan_x; 
     set<StateXY> q_scan_y; 
     vector<StateXY> getHVGPath(StateXY goal);
+    bool checkAngledEdge(int startX, int startY, int endX, int endY);
+    set<StateXY> expanded_states;
 
 
     unordered_map<StateXY, tuple<shared_ptr<StateXY>, double>> paths;

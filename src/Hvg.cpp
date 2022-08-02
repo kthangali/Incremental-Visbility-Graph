@@ -20,15 +20,15 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
 {   
     vector<StateXY> actions = m_ap->getActions(parentState); //generate action space 
     vector<shared_ptr<HVGNode>> children; 
-    for (const StateXY& ac : actions) { //loop over action space
+    for (const StateXY& ac : actions) { 
         Transition<StateXY> t = m_ap->m_env->getTransition(parentState, ac); //check if transition is valid 
         if(!t.isValid) {continue;} //skip if transition is invalid 
-        // HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, parentNode->scan_x, parentNode->scan_y, parentNode->vg_nodes); //create child node for corresponding action 
         HVGNode child = HVGNode(parentNode, 0, -1, t.s, false, false, q_scan_x, q_scan_y, q_vg); //create child node for corresponding action 
         shared_ptr<HVGNode> child_ptr = make_shared<HVGNode>(child); //convert child into pointer
         
         //generate new scans
-        scan(child_ptr, env); //update scans
+        scan(child_ptr, env); //collect any new nodes
+        //add all new nodes to overall scans
         for(auto n : child_ptr->scan_x)
         {
             q_scan_x.insert(n);
@@ -38,19 +38,19 @@ vector<shared_ptr<HVGNode>> HVGQueue::getChildren(shared_ptr<HVGNode> parentNode
             q_scan_y.insert(n);
         }
 
-        //should keep vg nodes of parent node since we're using previous scans 
-        child_ptr->vg_nodes = getVG(child);
+        //get new visibility graph with updated scans 
+        child_ptr->vg_nodes = getVG();
         child_ptr->vg_nodes.insert(child.s); //insert goal into the graph 
-        double g = shortPathFromVG(child.vg_nodes, start, child.s, false); 
-        child_ptr->g = g;
-        //set child's g value 
+        
+        //get g value 
+        child_ptr->g = shortPathFromVG(child.vg_nodes, start, child.s, false);
+
         children.push_back(child_ptr);
     }
     return children;
 }
 
-//overridden expand function 
-// template <class StateXY>
+// overridden expand function 
 tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVGQueue::expand(double ancFThresh) {
     assert(canExpand(ancFThresh)); // This also calls prepareForExpand()
 
@@ -65,9 +65,10 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     shared_ptr<HVGNode> qn_HVG;
     //creating new HVGNode with same state as qn_HVG
 
-    HVGNode temp = HVGNode(qn.n->parent, 0, -1, qn.n->s, false, false, q_scan_x, q_scan_y,set<StateXY>());
+    HVGNode temp = HVGNode(qn.n->parent, 0, -1, qn.n->s, false, false, q_scan_x, q_scan_y, q_vg);
+    //debugging
+    expanded_states.insert(temp.s);
     qn_HVG = make_shared<HVGNode>(temp); 
-    // qn_HVG->s = StateXY(qn.n->s.c[0], qn.n->s.c[1]);
 
     scan(qn_HVG, m_ap->m_env);
     //add any new scan nodes to overall scan
@@ -81,7 +82,7 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     }
 
     //add any new vg nodes to overall vg 
-    qn_HVG->vg_nodes = getVG(*qn_HVG); 
+    qn_HVG->vg_nodes = getVG(); 
     for (auto vg_node : qn_HVG->vg_nodes)
     {
         q_vg.insert(vg_node);
@@ -91,7 +92,8 @@ tuple<vector<shared_ptr<Node<StateXY>>>, vector<shared_ptr<Node<StateXY>>> > HVG
     vector<shared_ptr<NodeT>> expanded = {qn.n}; //set of expanded nodes
 
     vector<shared_ptr<HVGNode>> children = getChildren(qn_HVG, qn_HVG->s, m_ap->m_env); 
-    //match return type (HVGNodes are Nodes)
+
+    //put into dummy vector to match return type 
     vector<shared_ptr<Node<StateXY>>> dummy_children;
     for(auto c: children)
     {
@@ -151,16 +153,17 @@ void HVGQueue::scan(shared_ptr<HVGNode> node, Env<StateXY>* e)
 
 //Input: set of scans in x direction and set of scans in y direction 
 //Output: set of stateXY objects present in both, indicating obstacle corner 
-set<StateXY> HVGQueue::getVG(HVGNode node)
+set<StateXY> HVGQueue::getVG()
 {
+    //q_scan_x and q_scan_y contain all the previous scans + scans from node
     set<StateXY> scans_x = q_scan_x;
     set<StateXY> scans_y = q_scan_y;
-    set<tuple<int,int>> y_coords{}; //create empty set to store just x and y coordinates of y scans 
+    //can just loop over x because w only care about what's in both of the scans
     for(auto itr_x : scans_x)  //itr is a StateXY 
     {
         for(auto itr_y : scans_y)
         {
-            if(itr_y.c[0] == itr_x.c[0] && itr_y.c[1] == itr_x.c[1])
+            if(itr_x == itr_y)
             {
                 q_vg.insert(itr_y);
             }
@@ -185,6 +188,7 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     set<StateXY> new_nodes;
     set<StateXY> old_nodes;
     bool valid;
+
     for (auto node : vg)
     {
         if(paths.find(node) == paths.end()) //node is new
@@ -198,15 +202,14 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
     }
     old_nodes.insert(start); //we always want the path from start 
     paths.insert({start, make_tuple(nullptr, 0)}); //length from start to start is 0
-    //checking for / adding new edges 
-    for (auto end : new_nodes) //loop over all new nodes
+    //adding any new valid edges from old nodes to new nodes 
+    for (auto end : new_nodes) 
     {
         smallest = INT_MAX;
         p = nullptr;
         for(auto s : old_nodes)
         {
             //check validity of edge from s to end 
-            if(s == end){continue;}
             valid = collisionCheck(s, end);
             if(valid)
             {
@@ -260,24 +263,26 @@ double HVGQueue::shortPathFromVG(set<StateXY> vg_temp, StateXY start, StateXY go
             in_vg = true;
         }
     }
+    //remove all edges to new node from paths, unless its a vg node 
     if(in_vg && goalFound == false)
     {
         paths.erase(goal);
     }
-    bool t = collisionCheck(StateXY(21,9), StateXY(4,9));
+    bool c = checkAngledEdge(9, 9, 14, 12);
+    checkAngledEdge(22, 18, 40, 14);
     return smallest;
 }
 
+
+//returns true if (x,y) is valid on the edge from (startX, startY) to (endX, endY)
 bool HVGQueue::validityCheck(int x, int y, int startX, int startY, int endX, int endY)
 {
         int temp_x = x;
         int temp_y = y; 
         if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
         {
-            if(startX <= temp_x && temp_x <= endX && 
-                min(startY, endY) <= temp_y && 
-                temp_y <= max(startY, endY)
-                && make_tuple(startX, startY) != make_tuple(temp_x, temp_y)
+            //if (x,y) is within bounds and not equal to the start or end states 
+            if(make_tuple(startX, startY) != make_tuple(temp_x, temp_y)
                 && make_tuple(endX, endY) != make_tuple(temp_x, temp_y))
                 {
                     return false;
@@ -286,6 +291,8 @@ bool HVGQueue::validityCheck(int x, int y, int startX, int startY, int endX, int
         return true;
 }
 
+//returns true if the edge from (startX, startY) to (endX, endY) is an edge along
+// the side of an obstacle
 bool HVGQueue::isObstacleSide(int startX, int startY, int endX, int endY)
 {
     if(startX == endX) //vertical
@@ -347,6 +354,44 @@ bool HVGQueue::isObstacleSide(int startX, int startY, int endX, int endY)
     return true;
 }
 
+bool HVGQueue::checkAngledEdge(int startX, int startY, int endX, int endY)
+{
+    double temp_x;
+    double temp_y;
+    double dX;
+    double dY;
+    double x_dirs[4] = {-0.5, -0.5, 0.5, 0.5};
+    double y_dirs[4] = {0.5, -0.5, 0.5, -0.5};
+    bool valid = true;
+
+    for(int i = 0; i < 4; i++)
+    {
+        dX = x_dirs[i];
+        dY = y_dirs[i];
+        valid = true;
+        for(double k = 0.1; k < 1; k += 0.1)
+        {
+            temp_x = (startX + dX) * (k) + (endX + dX) * (1-k); 
+            temp_y = (startY + dY) * (k) + (endY + dY) * (1-k);
+            if(temp_x - int(temp_x) == 0.5 && temp_y - int(temp_y) == 0.5)
+            {
+                continue;
+            }
+            else
+            {
+                if(!validityCheck(round(temp_x), round(temp_y), startX, startY, endX, endY))
+                {
+                    valid = false;
+                    break;
+                }
+            } 
+        }
+        if(valid == true) {return true;}
+    }
+    //none of the edges returned true
+    return false;
+}
+
 bool HVGQueue::collisionCheck(StateXY start, StateXY end)
 {
     //if x of start and goal is the same or y of start and goal is the same then 
@@ -368,10 +413,9 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
         {
             return true;
         }
-        for(double k = min(startX, endX) + 1; k < max(startX, endX); k++)
+        for(double k = min(startY, endY) + 1; k < max(startY, endY); k++)
         {
-            temp_x = k;
-            temp_y = round(min(startY, endY) + k * (abs(startY - endY)));
+            temp_y = k;
             if(!m_ap->m_env->isValidState(StateXY(temp_x, temp_y)))
             {
                 valid = false;
@@ -401,46 +445,7 @@ bool HVGQueue::collisionCheck(StateXY start, StateXY end)
     }
     else
     {
-        valid = true;
-        //put in terms of left to right 
-        if(endX < startX) 
-        {
-            int tempStart = startX;
-            int tempEnd = startY;
-            startX = endX;
-            startY = endY;
-            endX = tempStart;
-            endY = tempEnd;
-        }
-        double m = abs(float(endY - startY) / float(endX - startX));
-        for(double k = 0.1; k <= 1; k += 0.1)
-        {
-            temp_x = startX + k * abs(endX - startX);
-            if(endY < startY) //positive slope
-            {
-                temp_y = round(startY - (temp_x - startX) * m);
-            }
-            else //negative slope
-            {
-                temp_y = round(startY + (temp_x - startX) * m);
-            }
-            if(temp_x - int(temp_x) == 0.5)
-            {
-                if(!validityCheck(round(temp_x), temp_y, startX, startY, endX, endY) && 
-                !validityCheck(int(temp_x), temp_y, startX, startY, endX, endY))
-                {
-                    valid = false;
-                    break;
-                }
-            }
-            else
-            {
-                if(!validityCheck(round(temp_x), temp_y, startX, startY, endX, endY))
-                {
-                    return false;
-                }
-            }
-        }
+        valid = checkAngledEdge(startX, startY, endX, endY);
     }
     return valid;
     
